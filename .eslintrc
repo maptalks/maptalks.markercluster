@@ -1,0 +1,14 @@
+{
+  "extends": "maptalks",
+  "globals": {
+      "beforeEach" : true,
+      "afterEach" : true,
+      "describe":true,
+      "it":true,
+      "expect":true
+  },
+  "rules": {
+    "strict" : 0,
+    "global-require" : 0
+  }
+}
