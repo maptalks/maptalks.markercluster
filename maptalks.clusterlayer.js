@@ -14,16 +14,16 @@
         return {
             type : 'radial',
             colorStops : [
-                [0.00, 'rgba(' + color.join(',') + ', 0)'],
-                [0.50, 'rgba(' + color.join(',') + ', 1)'],
-                [1.00, 'rgba(' + color.join(',') + ', 1)'],
+                [0.00, 'rgba(' + color.join() + ', 0)'],
+                [0.50, 'rgba(' + color.join() + ', 1)'],
+                [1.00, 'rgba(' + color.join() + ', 1)']
             ]
-        }
+        };
     }
 
     var textSymbol = {
         'textFaceName'      : '"microsoft yahei"',
-        'textSize'          : 14,
+        'textSize'          : 14
     };
 
     var symbol = {
@@ -36,8 +36,8 @@
 
     maptalks.ClusterLayer = maptalks.VectorLayer.extend({
         options: {
-            'maxClusterRadius' : 120,
-            'geometryEvents' : false,
+            'maxClusterRadius' : 80,
+            'geometryEvents' : false
         },
 
         addMarker: function (markers) {
@@ -74,9 +74,9 @@
      * @function
      */
     maptalks.ClusterLayer._fromJSON = function (json) {
-        if (!profile || profile['type'] !== 'ClusterLayer') { return null; }
-        var layer = new maptalks.ClusterLayer(profile['id'], profile['options']);
-        var geoJSONs = profile['geometries'];
+        if (!json || json['type'] !== 'ClusterLayer') { return null; }
+        var layer = new maptalks.ClusterLayer(json['id'], json['options']);
+        var geoJSONs = json['geometries'];
         var geometries = [],
             geo;
         for (var i = 0; i < geoJSONs.length; i++) {
@@ -98,10 +98,12 @@
             var symbolizer = maptalks.symbolizer.VectorMarkerSymbolizer;
             var style = symbolizer.translateLineAndFill(symbol);
             var argFn =  maptalks.Util.bind(function () {
-                    return [this.getMap().getZoom(), this._currentGrid];
-                }, this);
+                return [this.getMap().getZoom(), this._currentGrid];
+            }, this);
             this._style = maptalks.Util.loadFunctionTypes(style, argFn);
             this._symbol = maptalks.Util.loadFunctionTypes(symbol, argFn);
+            var id = maptalks.internalLayerPrefix + '_grid_' + maptalks.Util.GUID();
+            this._markerLayer = new maptalks.VectorLayer(id).addTo(layer.getMap());
             this._computeGrid();
         },
 
@@ -109,14 +111,20 @@
             this._prepareCanvas();
             var ctx = this._context,
                 font = maptalks.symbolizer.TextMarkerSymbolizer.getFont(textSymbol);
+            this._markerLayer.clear();
             maptalks.Canvas.prepareCanvasFont(ctx, textSymbol);
             var map = this.getMap(),
                 size = map.getSize(),
                 extent = new maptalks.PointExtent(0, 0, size['width'], size['height']),
                 symbol = this._symbol,
+                markers = [],
                 pt, pExt, width;
             for (var p in this._grid) {
                 this._currentGrid = this._grid[p];
+                if (this._currentGrid['count'] === 1) {
+                    markers.push(this._currentGrid['geo'].copy());
+                    continue;
+                }
                 width = symbol['markerWidth'];
                 pt = map._prjToContainerPoint(this._grid[p]['center'])._round();
                 pExt = new maptalks.PointExtent(pt.substract(width, width), pt.add(width, width));
@@ -131,11 +139,27 @@
                 maptalks.Canvas.fillCanvas(ctx, symbol['markerFillOpacity']);
 
                 if (!this._grid[p]['size']) {
-                    this._grid[p]['size'] = maptalks.StringUtil.stringLength(this._grid[p]['count'], font).toPoint()._multi(1/2);
+                    this._grid[p]['size'] = maptalks.StringUtil.stringLength(this._grid[p]['count'], font).toPoint()._multi(1 / 2);
                 }
                 maptalks.Canvas.fillText(ctx, this._grid[p]['count'], pt.substract(this._grid[p]['size'])._round(), '#000');
             }
+            this._markerLayer.addGeometry(markers);
             this._complete();
+        },
+
+        show: function () {
+            this._markerLayer.show();
+            maptalks.renderer.Canvas.prototype.show.call(this);
+        },
+
+        hide: function () {
+            this._markerLayer.hide();
+            maptalks.renderer.Canvas.prototype.hide.call(this);
+        },
+
+        setZIndex: function (z) {
+            this._markerLayer.setZIndex(z);
+            maptalks.renderer.Canvas.prototype.setZIndex.call(this, z);
         },
 
         _computeGrid: function () {
@@ -155,7 +179,8 @@
         },
 
         _computeZoomGrid: function (zoom) {
-            var t = map._getResolution(zoom) * this._layer.options['maxClusterRadius'] * 2,
+            var map = this.getMap(),
+                t = map._getResolution(zoom) * this._layer.options['maxClusterRadius'] * 2,
                 preCache = this._gridCache[zoom - 1],
                 preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this._layer.options['maxClusterRadius'] * 2 : null;
             var extent = this._markerExtent, points = this._markerPoints;
@@ -174,14 +199,15 @@
                     points.push({
                         x : c.x,
                         y : c.y,
-                        id : g._getInternalId()
+                        id : g._getInternalId(),
+                        geometry : g
                     });
                 }, this);
                 this._markerExtent = extent;
                 this._markerPoints = points;
             }
             if (!extent) {
-                return;
+                return null;
             }
             var grid = {},
                 min = extent.getMin(),
@@ -195,7 +221,8 @@
                     grid[key] = {
                         'sum' : new maptalks.Coordinate(points[i].x, points[i].y),
                         'center' : new maptalks.Coordinate(points[i].x, points[i].y),
-                        'count' : 1
+                        'count' : 1,
+                        'geo' : points[i].geometry
                     };
                     if (preT && preCache) {
                         pgx = Math.floor((points[i].x - min.x) / preT);
