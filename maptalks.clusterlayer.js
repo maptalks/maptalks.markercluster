@@ -122,7 +122,7 @@
             for (var p in this._grid) {
                 this._currentGrid = this._grid[p];
                 if (this._currentGrid['count'] === 1) {
-                    markers.push(this._currentGrid['geo'].copy());
+                    markers.push(this._currentGrid['geo'].copy().copyEventListeners(this._currentGrid['geo']));
                     continue;
                 }
                 width = symbol['markerWidth'];
