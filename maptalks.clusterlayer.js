@@ -11,25 +11,28 @@
     }
     //
     function getGradient(color) {
-        return {
+        return 'rgba(' + color.join() + ', 1)';
+        /*return {
             type : 'radial',
             colorStops : [
                 [0.00, 'rgba(' + color.join() + ', 0)'],
                 [0.50, 'rgba(' + color.join() + ', 1)'],
                 [1.00, 'rgba(' + color.join() + ', 1)']
             ]
-        };
+        };*/
     }
 
     var textSymbol = {
         'textFaceName'      : '"microsoft yahei"',
-        'textSize'          : 14
+        'textSize'          : 16
     };
 
     var symbol = {
-        'markerFill' : {property:'count', type:'interval', stops: [[0, getGradient([181, 226, 140])], [9, getGradient([241, 211, 87])], [99, getGradient([253, 156, 115])]]},
-        'markerFillOpacity' : 1,
-        'markerLineOpacity' : 0,
+        'markerFill' : {property:'count', type:'interval', stops: [[0, getGradient([135, 196, 240])/*getGradient([255, 226, 140])*/], [9, '#1bbc9b'/*getGradient([241, 211, 87])*/], [99, getGradient([216, 115, 149])]]},
+        'markerFillOpacity' : 0.7,
+        'markerLineOpacity' : 1,
+        'markerLineWidth' : 3,
+        'markerLineColor' : '#fff',
         'markerWidth' : {property:'count', type:'interval', stops: [[0, 20], [9, 30], [99, 40]]},
         'markerHeight' : 40
     };
@@ -37,7 +40,10 @@
     maptalks.ClusterLayer = maptalks.VectorLayer.extend({
         options: {
             'maxClusterRadius' : 80,
-            'geometryEvents' : false
+            'geometryEvents' : false,
+            'symbol' : symbol,
+            'animation' : true,
+            'animationDuration' : 450
         },
 
         addMarker: function (markers) {
@@ -104,25 +110,27 @@
             this._symbol = maptalks.Util.loadFunctionTypes(symbol, argFn);
             var id = maptalks.internalLayerPrefix + '_grid_' + maptalks.Util.GUID();
             this._markerLayer = new maptalks.VectorLayer(id).addTo(layer.getMap());
+            this._animated = true;
             this._computeGrid();
         },
 
         draw: function () {
-            this._prepareCanvas();
-            var ctx = this._context,
-                font = maptalks.symbolizer.TextMarkerSymbolizer.getFont(textSymbol);
-            this._markerLayer.clear();
-            maptalks.Canvas.prepareCanvasFont(ctx, textSymbol);
+            if (!this._canvas) {
+                this._prepareCanvas();
+            }
+            var font = maptalks.symbolizer.TextMarkerSymbolizer.getFont(textSymbol);
             var map = this.getMap(),
                 size = map.getSize(),
                 extent = new maptalks.PointExtent(0, 0, size['width'], size['height']),
                 symbol = this._symbol,
-                markers = [],
+                marker, markers = [], clusters = [],
                 pt, pExt, width;
             for (var p in this._grid) {
                 this._currentGrid = this._grid[p];
-                if (this._currentGrid['count'] === 1) {
-                    markers.push(this._currentGrid['geo'].copy().copyEventListeners(this._currentGrid['geo']));
+                if (this._grid[p]['count'] === 1) {
+                    marker = this._grid[p]['geo'].copy().copyEventListeners(this._grid[p]['geo']);
+                    marker._cluster = this._grid[p];
+                    markers.push(marker);
                     continue;
                 }
                 width = symbol['markerWidth'];
@@ -131,20 +139,13 @@
                 if (!extent.intersects(pExt)) {
                     continue;
                 }
-                this._style['polygonGradientExtent'] = pExt;
-                maptalks.Canvas.prepareCanvas(ctx, this._style);
-                ctx.beginPath();
-                ctx.arc(pt.x, pt.y, symbol['markerWidth'], 0, 2 * Math.PI);
-                maptalks.Canvas._stroke(ctx, symbol['markerLineOpacity']);
-                maptalks.Canvas.fillCanvas(ctx, symbol['markerFillOpacity']);
-
                 if (!this._grid[p]['size']) {
                     this._grid[p]['size'] = maptalks.StringUtil.stringLength(this._grid[p]['count'], font).toPoint()._multi(1 / 2);
                 }
-                maptalks.Canvas.fillText(ctx, this._grid[p]['count'], pt.substract(this._grid[p]['size'])._round(), '#000');
+                clusters.push(this._grid[p]);
             }
-            this._markerLayer.addGeometry(markers);
-            this._complete();
+            this._currentClusters = clusters;
+            this._drawLayer(clusters, markers);
         },
 
         show: function () {
@@ -160,6 +161,98 @@
         setZIndex: function (z) {
             this._markerLayer.setZIndex(z);
             maptalks.renderer.Canvas.prototype.setZIndex.call(this, z);
+        },
+
+        transform: function (matrix) {
+            if (this._currentClusters) {
+                this._drawClusters(this._currentClusters, 1, matrix);
+            }
+            return true;
+        },
+
+        _drawLayer: function (clusters, markers, matrix) {
+            var layer = this.getLayer();
+            var me = this;
+            if (layer.options['animation'] && this._animated && this._inout === 'out') {
+                maptalks.Animation.animate(
+                    {'d' : [0, 1]},
+                    {'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut'},
+                    function (frame) {
+                        if (frame.state.playState === 'finished') {
+                            if (!matrix) {
+                                me._markerLayer.addGeometry(markers);
+                            }
+                            me._animated = false;
+                            me._complete();
+                        } else {
+                            me._drawClusters(clusters, frame.styles.d, matrix);
+                            me._complete();
+                        }
+                    }
+                )
+                .play();
+                this._drawClusters(clusters, 0, matrix);
+                this._complete();
+            } else {
+                this._drawClusters(clusters, 1, matrix);
+                if (!matrix) {
+                    this._markerLayer.addGeometry(markers);
+                }
+                this._complete();
+            }
+        },
+
+        _drawClusters: function (clusters, ratio, matrix) {
+            matrix = matrix ? matrix['container'] : null;
+            this._prepareCanvas();
+            var map = this.getMap(),
+                ctx = this._context,
+                drawn = {};
+            maptalks.Canvas.prepareCanvasFont(ctx, textSymbol);
+            clusters.forEach(function (c) {
+                if (c.parent) {
+                    var parent = map._prjToContainerPoint(c.parent['center'])._round();
+                    if (!drawn[c.parent.key]) {
+                        if (matrix) {
+                            parent = matrix.applyToPointInstance(parent);
+                        }
+                        drawn[c.parent.key] = 1;
+                        this._drawCluster(parent, c.parent, 1 - ratio);
+                    }
+                }
+            }, this);
+            if (ratio === 0) {
+                return;
+            }
+            clusters.forEach(function (c) {
+                var pt = map._prjToContainerPoint(c['center'])._round();
+                if (c.parent) {
+                    var parent = map._prjToContainerPoint(c.parent['center'])._round();
+                    pt = parent.add(pt.substract(parent)._multi(ratio));
+                }
+                if (matrix) {
+                    pt = matrix.applyToPointInstance(pt);
+                }
+                this._drawCluster(pt, c, ratio > 0.5 ? 1 : ratio);
+            }, this);
+
+        },
+
+        _drawCluster: function (pt, grid, op) {
+            this._currentGrid = grid;
+            var ctx = this._context,
+                symbol = this._symbol,
+                width = symbol['markerWidth'];
+            var pExt = new maptalks.PointExtent(pt.substract(width, width), pt.add(width, width));
+            this._style['polygonGradientExtent'] = pExt;
+            maptalks.Canvas.prepareCanvas(ctx, this._style);
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, width, 0, 2 * Math.PI);
+            maptalks.Canvas._stroke(ctx, symbol['markerLineOpacity'] * op);
+            maptalks.Canvas.fillCanvas(ctx, symbol['markerFillOpacity'] * op);
+            if (grid['size']) {
+                maptalks.Canvas.fillText(ctx, grid['count'], pt.substract(grid['size'])._round(), 'rgba(0,0,0,' + op + ')');
+            }
         },
 
         _computeGrid: function () {
@@ -222,14 +315,14 @@
                         'sum' : new maptalks.Coordinate(points[i].x, points[i].y),
                         'center' : new maptalks.Coordinate(points[i].x, points[i].y),
                         'count' : 1,
-                        'geo' : points[i].geometry
+                        'geo' : points[i].geometry,
+                        'key' : key + ''
                     };
                     if (preT && preCache) {
                         pgx = Math.floor((points[i].x - min.x) / preT);
                         pgy = Math.floor((points[i].y - min.y) / preT);
                         pkey = pgx + '_' + pgy;
-                        parent = preCache[pkey];
-                        grid[key]['parent'] = parent;
+                        grid[key]['parent'] = preCache[pkey];
                     }
                 } else {
                     grid[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
@@ -242,7 +335,21 @@
             return grid;
         },
 
+        _getEvents: function () {
+            var events = maptalks.renderer.Canvas.prototype._getEvents.apply(this, arguments);
+            events['_zoomstart'] = this._onZoomStart;
+            return events;
+        },
+
+        _onZoomStart: function (param) {
+            this._inout = param['from'] > param['to'] ? 'in' : 'out';
+            if (this._markerLayer.getCount() > 0) {
+                this._markerLayer.clear();
+            }
+        },
+
         _onZoomEnd: function () {
+            this._animated = true;
             this._computeGrid();
             maptalks.renderer.Canvas.prototype._onZoomEnd.apply(this, arguments);
         }
