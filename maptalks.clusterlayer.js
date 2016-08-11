@@ -116,7 +116,7 @@
 
         draw: function () {
             if (!this._canvas) {
-                this._prepareCanvas();
+                this.prepareCanvas();
             }
             var font = maptalks.symbolizer.TextMarkerSymbolizer.getFont(textSymbol);
             var map = this.getMap(),
@@ -144,7 +144,6 @@
                 }
                 clusters.push(this._grid[p]);
             }
-            this._currentClusters = clusters;
             this._drawLayer(clusters, markers);
         },
 
@@ -171,40 +170,44 @@
         },
 
         _drawLayer: function (clusters, markers, matrix) {
+            if (this._currentClusters && clusters.length === this._currentClusters.length) {
+                this._animated = false;
+            }
+            this._currentClusters = clusters;
             var layer = this.getLayer();
             var me = this;
             if (layer.options['animation'] && this._animated && this._inout === 'out') {
-                maptalks.Animation.animate(
+                this._player = maptalks.Animation.animate(
                     {'d' : [0, 1]},
                     {'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut'},
                     function (frame) {
                         if (frame.state.playState === 'finished') {
-                            if (!matrix) {
+                            if (!matrix && me._markerLayer.getCount() === 0) {
                                 me._markerLayer.addGeometry(markers);
                             }
                             me._animated = false;
-                            me._complete();
+                            me.completeRender();
                         } else {
                             me._drawClusters(clusters, frame.styles.d, matrix);
-                            me._complete();
+                            me.requestMapToRender();
                         }
                     }
                 )
                 .play();
                 this._drawClusters(clusters, 0, matrix);
-                this._complete();
+                this.requestMapToRender();
             } else {
                 this._drawClusters(clusters, 1, matrix);
-                if (!matrix) {
+                if (!matrix && this._markerLayer.getCount() === 0) {
                     this._markerLayer.addGeometry(markers);
                 }
-                this._complete();
+                this.completeRender();
             }
         },
 
         _drawClusters: function (clusters, ratio, matrix) {
             matrix = matrix ? matrix['container'] : null;
-            this._prepareCanvas();
+            this.prepareCanvas();
             var map = this.getMap(),
                 ctx = this._context,
                 drawn = {};
@@ -276,6 +279,9 @@
                 t = map._getResolution(zoom) * this._layer.options['maxClusterRadius'] * 2,
                 preCache = this._gridCache[zoom - 1],
                 preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this._layer.options['maxClusterRadius'] * 2 : null;
+            if (!preCache && zoom - 1 >= map.getMinZoom()) {
+                this._gridCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
+            }
             var extent = this._markerExtent, points = this._markerPoints;
             if (!extent || !points) {
                 if (!points) {
@@ -335,23 +341,20 @@
             return grid;
         },
 
-        _getEvents: function () {
-            var events = maptalks.renderer.Canvas.prototype._getEvents.apply(this, arguments);
-            events['_zoomstart'] = this._onZoomStart;
-            return events;
-        },
-
-        _onZoomStart: function (param) {
+        onZoomStart: function (param) {
             this._inout = param['from'] > param['to'] ? 'in' : 'out';
             if (this._markerLayer.getCount() > 0) {
                 this._markerLayer.clear();
             }
+            if (this._player && this._player.playState !== 'finished') {
+                this._player.finish();
+            }
         },
 
-        _onZoomEnd: function () {
+        onZoomEnd: function () {
             this._animated = true;
             this._computeGrid();
-            maptalks.renderer.Canvas.prototype._onZoomEnd.apply(this, arguments);
+            maptalks.renderer.Canvas.prototype.onZoomEnd.apply(this, arguments);
         }
     });
 
