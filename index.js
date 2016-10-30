@@ -133,24 +133,24 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
             symbol = this._symbol,
             marker, markers = [], clusters = [],
             pt, pExt, width;
-        for (var p in this._grid) {
-            this._currentGrid = this._grid[p];
-            if (this._grid[p]['count'] === 1) {
-                marker = this._grid[p]['children'][0].copy().copyEventListeners(this._grid[p]['children'][0]);
-                marker._cluster = this._grid[p];
+        for (var p in this._clusters) {
+            this._currentGrid = this._clusters[p];
+            if (this._clusters[p]['count'] === 1) {
+                marker = this._clusters[p]['children'][0].copy().copyEventListeners(this._clusters[p]['children'][0]);
+                marker._cluster = this._clusters[p];
                 markers.push(marker);
                 continue;
             }
             width = symbol['markerWidth'];
-            pt = map._prjToContainerPoint(this._grid[p]['center']);
+            pt = map._prjToContainerPoint(this._clusters[p]['center']);
             pExt = new maptalks.PointExtent(pt.substract(width, width), pt.add(width, width));
             if (!extent.intersects(pExt)) {
                 continue;
             }
-            if (!this._grid[p]['size']) {
-                this._grid[p]['size'] = maptalks.StringUtil.stringLength(this._grid[p]['count'], font).toPoint()._multi(1 / 2);
+            if (!this._clusters[p]['size']) {
+                this._clusters[p]['size'] = maptalks.StringUtil.stringLength(this._clusters[p]['count'], font).toPoint()._multi(1 / 2);
             }
-            clusters.push(this._grid[p]);
+            clusters.push(this._clusters[p]);
         }
         this._drawLayer(clusters, markers);
     },
@@ -336,17 +336,17 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
         if (!this._markerExtent) {
             this._initGridSystem();
         }
-        if (!this._gridCache) {
-            this._gridCache = {};
+        if (!this._clusterCache) {
+            this._clusterCache = {};
         }
         var pre = map._getResolution(map.getMinZoom()) > map._getResolution(map.getMaxZoom()) ? zoom - 1 : zoom + 1;
-        if (this._gridCache[pre] && this._gridCache[pre].length === this.layer.getCount()) {
-            this._gridCache[zoom] = this._gridCache[pre];
+        if (this._clusterCache[pre] && this._clusterCache[pre].length === this.layer.getCount()) {
+            this._clusterCache[zoom] = this._clusterCache[pre];
         }
-        if (!this._gridCache[zoom]) {
-            this._gridCache[zoom] = this._computeZoomGrid(zoom);
+        if (!this._clusterCache[zoom]) {
+            this._clusterCache[zoom] = this._computeZoomGrid(zoom);
         }
-        this._grid = this._gridCache[zoom];
+        this._clusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
         this._geoCount = this.layer.getCount();
     },
 
@@ -355,23 +355,26 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
             return null;
         }
         var map = this.getMap(),
-            t = map._getResolution(zoom) * this.layer.options['maxClusterRadius'] * 2,
-            preCache = this._gridCache[zoom - 1],
+            r = map._getResolution(zoom) * this.layer.options['maxClusterRadius'] * 2,
+            preCache = this._clusterCache[zoom - 1],
             preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this.layer.options['maxClusterRadius'] * 2 : null;
         if (!preCache && zoom - 1 >= map.getMinZoom()) {
-            this._gridCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
+            this._clusterCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
         }
+        // 1. format extent of markers to grids with raidus of r
+        // 2. find point's grid in the grids
+        // 3. sum up the point into the grid's collection
         var points = this._markerPoints;
-        var grid = {},
+        var grids = {},
             min = this._markerExtent.getMin(),
             gx, gy, key,
             pgx, pgy, pkey;
         for (var i = 0, len = points.length; i < len; i++) {
-            gx = Math.floor((points[i].x - min.x) / t);
-            gy = Math.floor((points[i].y - min.y) / t);
+            gx = Math.floor((points[i].x - min.x) / r);
+            gy = Math.floor((points[i].y - min.y) / r);
             key = gx + '_' + gy;
-            if (!grid[key]) {
-                grid[key] = {
+            if (!grids[key]) {
+                grids[key] = {
                     'sum' : new maptalks.Coordinate(points[i].x, points[i].y),
                     'center' : new maptalks.Coordinate(points[i].x, points[i].y),
                     'count' : 1,
@@ -382,17 +385,90 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
                     pgx = Math.floor((points[i].x - min.x) / preT);
                     pgy = Math.floor((points[i].y - min.y) / preT);
                     pkey = pgx + '_' + pgy;
-                    grid[key]['parent'] = preCache[pkey];
+                    grids[key]['parent'] = preCache['clusterMap'][pkey];
                 }
             } else {
-                grid[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
-                grid[key]['count']++;
-                grid[key]['center'] = grid[key]['sum'].multi(1 / grid[key]['count']);
-                grid[key]['children'].push(points[i].geometry);
+                grids[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
+                grids[key]['count']++;
+                grids[key]['center'] = grids[key]['sum'].multi(1 / grids[key]['count']);
+                grids[key]['children'].push(points[i].geometry);
             }
         }
-        // 测试有没有相邻的cluster
-        return grid;
+        // return {
+        //     'clusters' : grids,
+        //     'clusterMap' : grids
+        // };
+        return this._mergeClusters(grids, r / 2);
+    },
+
+    _mergeClusters: function (grids, r) {
+        var clusterMap = {};
+        for (var p in grids) {
+            clusterMap[p] = grids[p];
+        }
+
+        // merge adjacent clusters
+        var merging = {};
+
+        var visited = {};
+        // find clusters need to merge
+        var c1, c2;
+        for (var p in grids) {
+            c1 = grids[p];
+            if (visited[c1.key]) {
+                continue;
+            }
+            var gxgy = c1.key.split('_');
+            var gx = +(gxgy[0]),
+                gy = +(gxgy[1]);
+            //traverse adjacent grids
+            for (var ii = -1; ii <= 1; ii++) {
+                for (var iii = -1; iii <= 1; iii++) {
+                    if (ii === 0 && iii === 0) {
+                        continue;
+                    }
+                    var key2 = (gx + ii) + '_' + (gy + iii);
+                    c2 = grids[key2];
+                    if (c2 && this._distanceTo(c1['center'], c2['center']) <= r) {
+                        if (!merging[c1.key]) {
+                            merging[c1.key] = [];
+                        }
+                        merging[c1.key].push(c2);
+                        visited[c2.key] = 1;
+                    }
+                }
+            }
+        }
+
+        //merge clusters
+        for (var m in merging) {
+            var grid = grids[m];
+            if (!grid) {
+                continue;
+            }
+            var toMerge = merging[m];
+            for (var i = 0; i < toMerge.length; i++) {
+                if (grids[toMerge[i].key]) {
+                    grid['sum']._add(toMerge[i].sum);
+                    grid['count'] += toMerge[i].count;
+                    grid['children'].concat(toMerge[i].geometry);
+                    clusterMap[toMerge[i].key] = grid;
+                    delete grids[toMerge[i].key];
+                }
+            }
+            grid['center'] = grid['sum'].multi(1 / grid['count']);
+        }
+
+        return {
+            'clusters' : grids,
+            'clusterMap' : clusterMap
+        };
+    },
+
+    _distanceTo: function (c1, c2) {
+        var x = c1.x - c2.x,
+            y = c1.y - c2.y;
+        return Math.sqrt(x * x + y * y);
     },
 
     _stopAnim: function () {
