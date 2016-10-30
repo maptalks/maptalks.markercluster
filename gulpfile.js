@@ -8,7 +8,7 @@ var buffer = require('vinyl-buffer');
 var version = require('./package.json').version;
 
 gulp.task('watch', ['build'], function () {
-   var scriptWatcher = gulp.watch(['src/**/*.js', './gulpfile.js'], ['build']); // watch the same files in our scripts task
+   var scriptWatcher = gulp.watch(['index.js', './gulpfile.js'], ['build']); // watch the same files in our scripts task
 });
 
 // ref:
@@ -17,7 +17,7 @@ gulp.task('build', function () {
     // set up the browserify instance on a task basis
   var b = browserify({
     entries: ['./index.js'],
-    debug: true
+    debug: false
   });
 
   b.external(['maptalks']);
