@@ -1,43 +1,33 @@
 'use strict';
 
-var path   = require('path'),
-    gulp   = require('gulp'),
-    gzip   = require('gulp-gzip'),
-    rename = require('gulp-rename'),
-    uglify = require('gulp-uglify'),
-    // mocha  = require('gulp-mocha'),
-    Server = require('karma').Server;
+var gulp   = require('gulp'),
+    header = require('gulp-header'),
+    browserify = require('browserify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var version = require('./package.json').version;
 
-var mainjs = './maptalks.clusterlayer.js';
-
-gulp.task('scripts', function () {
-    return gulp.src(mainjs)
-      .pipe(rename({suffix: '.min'}))
-      .pipe(uglify())
-      .pipe(gulp.dest('./'))
-      .pipe(gzip())
-      .pipe(gulp.dest('./'));
+gulp.task('watch', ['build'], function () {
+   var scriptWatcher = gulp.watch(['src/**/*.js', './gulpfile.js'], ['build']); // watch the same files in our scripts task
 });
 
-gulp.task('watch', ['test'], function () {
-    gulp.watch(['src/**/*.js', 'test/**/*.js', './gulpfile.js'], ['test']);
-});
+// ref:
+// https://github.com/gulpjs/gulp/blob/master/docs/recipes/browserify-transforms.md
+gulp.task('build', function () {
+    // set up the browserify instance on a task basis
+  var b = browserify({
+    entries: ['./index.js'],
+    debug: true
+  });
 
-var karmaConfig = {
-    configFile: path.join(__dirname, '/karma.conf.js'),
-    browsers: ['PhantomJS'],
-    singleRun: false
-};
+  b.external(['maptalks']);
 
-gulp.task('test', [], function (done) {
-    // gulp.src(['./node_modules/maptalks/dist/maptalks.js', mainjs, 'test/*.js'], {read: false})
-    //     .pipe(mocha());
-    karmaConfig.singleRun = true;
-    new Server(karmaConfig, done).start();
-});
-
-gulp.task('tdd', [], function (done) {
-    new Server(karmaConfig, done).start();
+  return b.bundle()
+    .pipe(source('maptalks.clusterlayer.js')) // gives streaming vinyl file object
+    .pipe(buffer()) // <----- convert from streaming to buffered vinyl file object
+    // .pipe(uglify()) // now gulp-uglify works
+    .pipe(header('//version:' + version+'\n'))
+    .pipe(gulp.dest('./dist/'));
 });
 
 gulp.task('default', ['watch']);
