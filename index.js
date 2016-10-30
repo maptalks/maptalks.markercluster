@@ -403,7 +403,8 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
 
     _mergeClusters: function (grids, r) {
         var clusterMap = {};
-        for (var p in grids) {
+        var p;
+        for (p in grids) {
             clusterMap[p] = grids[p];
         }
 
@@ -413,7 +414,7 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
         var visited = {};
         // find clusters need to merge
         var c1, c2;
-        for (var p in grids) {
+        for (p in grids) {
             c1 = grids[p];
             if (visited[c1.key]) {
                 continue;
