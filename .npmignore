@@ -10,5 +10,4 @@ karma.conf.js
 .eslintignore
 .gitignore
 .projectile
-API.md
 circle.yml

@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/MapTalks/maptalks.clusterlayer.js.git"
   },
-  "main": "maptalks.clusterlayer.js",
+  "main": "dist/maptalks.clusterlayer.js",
   "scripts": {
     "lint": "eslint index.js test/**/*.js",
     "test": "gulp test",
