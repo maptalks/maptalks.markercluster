@@ -20,20 +20,23 @@ var textSymbol = {
 };
 
 var defaultSymbol = {
-    'markerFill' : {property:'count', type:'interval', stops: [[0, getGradient([135, 196, 240])/*getGradient([255, 226, 140])*/], [9, '#1bbc9b'/*getGradient([241, 211, 87])*/], [99, getGradient([216, 115, 149])]]},
+    'markerType' : 'ellipse',
+    'markerFill' : {property:'count', type:'interval', stops: [[0, 'rgb(135, 196, 240)'], [9, '#1bbc9b'], [99, 'rgb(216, 115, 149)']]},
     'markerFillOpacity' : 0.7,
     'markerLineOpacity' : 1,
     'markerLineWidth' : 3,
     'markerLineColor' : '#fff',
-    'markerWidth' : {property:'count', type:'interval', stops: [[0, 20], [9, 30], [99, 40]]},
-    'markerHeight' : 40
+    'markerWidth' : {property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]]},
+    'markerHeight' : {property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]]}
 };
 
 module.exports = maptalks.ClusterLayer = maptalks.VectorLayer.extend({
     options: {
-        'maxClusterRadius' : 80,
+        'maxClusterRadius' : 160,
         'geometryEvents' : false,
         'symbol' : null,
+        'drawClusterText' : true,
+        'textSymbol' : null,
         'animation' : true,
         'animationDuration' : 450
     },
@@ -119,6 +122,10 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
         this._computeGrid();
     },
 
+    checkResources: function () {
+        return maptalks.Util.getExternalResources(this.layer.options['symbol'] || defaultSymbol, true);
+    },
+
     draw: function () {
         if (this._geoCount === undefined || this.layer.getCount() !== this._geoCount) {
             this._clearDataCache();
@@ -148,8 +155,8 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
             if (!extent.intersects(pExt)) {
                 continue;
             }
-            if (!this._clusters[p]['size']) {
-                this._clusters[p]['size'] = maptalks.StringUtil.stringLength(this._clusters[p]['count'], font).toPoint()._multi(1 / 2);
+            if (!this._clusters[p]['textSize']) {
+                this._clusters[p]['textSize'] = maptalks.StringUtil.stringLength(this._clusters[p]['count'], font).toPoint()._multi(1 / 2);
             }
             clusters.push(this._clusters[p]);
         }
@@ -222,9 +229,6 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
     },
 
     _drawLayer: function (clusters, markers, matrix) {
-        if (this._currentClusters && clusters.length === this._currentClusters.length) {
-            this._animated = false;
-        }
         this._currentClusters = clusters;
         var layer = this.layer;
         var me = this;
@@ -296,18 +300,41 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
     _drawCluster: function (pt, grid, op) {
         this._currentGrid = grid;
         var ctx = this.context,
-            symbol = this._symbol,
-            width = symbol['markerWidth'];
-        var pExt = new maptalks.PointExtent(pt.substract(width, width), pt.add(width, width));
-        this._style['polygonGradientExtent'] = pExt;
-        maptalks.Canvas.prepareCanvas(ctx, this._style);
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, width, 0, 2 * Math.PI);
-        maptalks.Canvas._stroke(ctx, symbol['markerLineOpacity'] * op);
-        maptalks.Canvas.fillCanvas(ctx, symbol['markerFillOpacity'] * op);
-        if (grid['size']) {
-            maptalks.Canvas.fillText(ctx, grid['count'], pt.substract(grid['size']), 'rgba(0,0,0,' + op + ')');
+            symbol = this._symbol;
+        var sprite = this._getSprite();
+        var opacity = ctx.globalAlpha;
+        if (opacity * op === 0) {
+            return;
         }
+        ctx.globalAlpha = opacity * op;
+        if (sprite) {
+            var pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2);
+            ctx.drawImage(sprite.canvas, pos.x, pos.y);
+        }
+
+        // var pExt = new maptalks.PointExtent(pt.substract(width, width), pt.add(width, width));
+        // this._style['polygonGradientExtent'] = pExt;
+        // maptalks.Canvas.prepareCanvas(ctx, this._style);
+        // ctx.beginPath();
+        // ctx.arc(pt.x, pt.y, width, 0, 2 * Math.PI);
+        // maptalks.Canvas._stroke(ctx, symbol['markerLineOpacity'] * op);
+        // maptalks.Canvas.fillCanvas(ctx, symbol['markerFillOpacity'] * op);
+
+        if (this.layer.options['drawClusterText'] && grid['textSize']) {
+            maptalks.Canvas.fillText(ctx, grid['count'], pt.substract(grid['textSize']), 'rgba(0,0,0,' + op + ')');
+        }
+        ctx.globalAlpha = opacity;
+    },
+
+    _getSprite: function () {
+        if (!this._spriteCache) {
+            this._spriteCache = {};
+        }
+        var key = maptalks.Util.getSymbolStamp(this._symbol);
+        if (!this._spriteCache[key]) {
+            this._spriteCache[key] = new maptalks.Marker([0, 0], {'symbol' : this._symbol})._getSprite(this.resources);
+        }
+        return this._spriteCache[key];
     },
 
     _initGridSystem: function () {
@@ -356,9 +383,9 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
             return null;
         }
         var map = this.getMap(),
-            r = map._getResolution(zoom) * this.layer.options['maxClusterRadius'] * 2,
+            r = map._getResolution(zoom) * this.layer.options['maxClusterRadius'],
             preCache = this._clusterCache[zoom - 1],
-            preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this.layer.options['maxClusterRadius'] * 2 : null;
+            preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this.layer.options['maxClusterRadius'] : null;
         if (!preCache && zoom - 1 >= map.getMinZoom()) {
             this._clusterCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
         }
