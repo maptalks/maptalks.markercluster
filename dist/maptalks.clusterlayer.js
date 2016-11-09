@@ -1,4 +1,4 @@
-//version:1.0.1
+//version:1.0.2
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
 'use strict';
@@ -124,6 +124,7 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
 
     draw: function () {
         if (this._geoCount === undefined || this.layer.getCount() !== this._geoCount) {
+            this._clearDataCache();
             this._computeGrid();
         }
         if (!this.canvas) {
@@ -493,6 +494,12 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
         this._animated = true;
         this._computeGrid();
         maptalks.renderer.Canvas.prototype.onZoomEnd.apply(this, arguments);
+    },
+
+    _clearDataCache: function () {
+        delete this._markerExtent;
+        delete this._markerPoints;
+        delete this._clusterCache;
     }
 }));
 
