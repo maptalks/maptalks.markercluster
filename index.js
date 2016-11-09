@@ -121,6 +121,7 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
 
     draw: function () {
         if (this._geoCount === undefined || this.layer.getCount() !== this._geoCount) {
+            this._clearDataCache();
             this._computeGrid();
         }
         if (!this.canvas) {
@@ -490,5 +491,11 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.Canvas.extend
         this._animated = true;
         this._computeGrid();
         maptalks.renderer.Canvas.prototype.onZoomEnd.apply(this, arguments);
+    },
+
+    _clearDataCache: function () {
+        delete this._markerExtent;
+        delete this._markerPoints;
+        delete this._clusterCache;
     }
 }));
