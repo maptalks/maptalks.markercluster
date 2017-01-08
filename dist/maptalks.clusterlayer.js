@@ -148,12 +148,13 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.overlaylayer.
         var maxClusterZoom = this.layer.options['maxClusterZoom'];
         if (maxClusterZoom &&  zoom > maxClusterZoom) {
             this.prepareCanvas();
+            delete this._currentClusters;
             this._markerLayer.clear();
             if (this._allMarkerLayer.getCount() !== this.layer.getCount()) {
                 this._allMarkerLayer.clear();
                 var copyMarkers = [];
                 this.layer.forEach(function (g) {
-                    copyMarkers.push(g.copy().setSymbol(markerSymbol));
+                    copyMarkers.push(g.copy().setSymbol(markerSymbol).copyEventListeners(g));
                 });
                 this._allMarkerLayer.addGeometry(copyMarkers);
             }
@@ -194,6 +195,12 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.overlaylayer.
             clusters.push(zoomClusters[p]);
         }
         this._drawLayer(clusters, markers);
+    },
+
+    drawOnZooming: function () {
+        if (this._currentClusters) {
+            this._drawClusters(this._currentClusters, 1);
+        }
     },
 
     onGeometryAdd: function () {
@@ -272,6 +279,10 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.overlaylayer.
         this._computeGrid();
         this._stopAnim();
         this.draw();
+    },
+
+    isUpdateWhenZooming: function () {
+        return true;
     },
 
     _refreshStyle: function () {
@@ -584,7 +595,6 @@ maptalks.ClusterLayer.registerRenderer('canvas', maptalks.renderer.overlaylayer.
     _clearDataCache: function () {
         this._stopAnim();
         this._markerLayer.clear();
-        this._allMarkerLayer.clear();
         delete this._markerExtent;
         delete this._markerPoints;
         delete this._clusterCache;
