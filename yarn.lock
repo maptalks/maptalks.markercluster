@@ -1647,6 +1647,16 @@ map-cache@^0.2.0:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/map-cache/-/map-cache-0.2.2.tgz#c32abd0bd6525d9b051645bb4f26ac5dc98a0dbf"
 
+"maptalks-build-helpers@https://github.com/maptalks/maptalks-build-helpers.git":
+  version "0.1.0"
+  resolved "https://github.com/maptalks/maptalks-build-helpers.git#a8435c96b712f5caa4f09f0effe025ed74cbb987"
+  dependencies:
+    babel-plugin-transform-proto-to-assign "^6.9.0"
+    rollup "^0.41.1"
+    rollup-plugin-babel "https://github.com/fuzhenn/rollup-plugin-babel.git"
+    uglify-js "^2.7.5"
+    zlib "^1.0.5"
+
 micromatch@^2.3.7:
   version "2.3.11"
   resolved "https://registry.yarnpkg.com/micromatch/-/micromatch-2.3.11.tgz#86677c97d1720b363431d04d0d15293bd38c1565"
@@ -2050,9 +2060,9 @@ rimraf@^2.2.8:
   version "2.2.8"
   resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-2.2.8.tgz#e439be2aaee327321952730f99a8929e4fc50582"
 
-rollup-plugin-babel@^2.7.1:
+"rollup-plugin-babel@https://github.com/fuzhenn/rollup-plugin-babel.git":
   version "2.7.1"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-babel/-/rollup-plugin-babel-2.7.1.tgz#16528197b0f938a1536f44683c7a93d573182f57"
+  resolved "https://github.com/fuzhenn/rollup-plugin-babel.git#d4ac9a00a28df340e2cf60846951a7be02fa7e5b"
   dependencies:
     babel-core "6"
     babel-plugin-transform-es2015-classes "^6.9.0"
