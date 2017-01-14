@@ -2,19 +2,26 @@
 
 const gulp = require('gulp'),
     pkg = require('./package.json'),
-    BundleHelper = require('maptalks-build-helpers').BundleHelper;
-const bundler = new BundleHelper(pkg);
+    BundleHelper = require('maptalks-build-helpers').BundleHelper,
+    TestHelper = require('maptalks-build-helpers').TestHelper;
+const bundleHelper = new BundleHelper(pkg);
+const testHelper = new TestHelper();
+const karmaConfig = require('./karma.config');
 
 gulp.task('build', () => {
-    return bundler.bundle('index.js');
+    return bundleHelper.bundle('index.js');
 });
 
 gulp.task('minify', ['build'], () => {
-    bundler.minify();
+    bundleHelper.minify();
 });
 
 gulp.task('watch', ['build'], () => {
     gulp.watch(['index.js', './gulpfile.js'], ['build']);
+});
+
+gulp.task('test', ['build'], () => {
+    testHelper.test(karmaConfig);
 });
 
 gulp.task('default', ['watch']);
