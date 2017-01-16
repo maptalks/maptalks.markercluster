@@ -308,7 +308,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                         }
                         this._markerLayer.addGeometry(markers);
                         this._animated = false;
-                        this.completeRender();
+                        this._completeAndFire();
                     } else {
                         this._drawClusters(clusters, frame.styles.d, matrix);
                         this.requestMapToRender();
@@ -327,7 +327,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 this._markerLayer.addGeometry(markers);
             }
             this._animated = false;
-            this.completeRender();
+            this._completeAndFire();
         }
     }
 
@@ -384,6 +384,16 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
             maptalks.Canvas.fillText(ctx, grid['count'], pt.substract(grid['textSize']));
         }
         ctx.globalAlpha = opacity;
+    }
+
+    _completeAndFire() {
+        if (this._markerLayer && this._markerLayer.getCount() > 0 && !this._markerLayer.isLoaded()) {
+            this._markerLayer.once('layerload', () => {
+                this.completeRender();
+            });
+        } else {
+            this.completeRender();
+        }
     }
 
     _getSprite() {
