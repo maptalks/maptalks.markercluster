@@ -19,5 +19,6 @@ module.exports = {
             base: 'IE',
             'x-ua-compatible': 'IE=EmulateIE9'
         }
-    }
+    },
+    singleRun : true
 };

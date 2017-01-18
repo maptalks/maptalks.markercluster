@@ -12,27 +12,45 @@ describe('ClusterLayer', function () {
     });
 
     afterEach(function () {
-        maptalks.DomUtil.removeDomNode(container);
+        map.remove();
     });
 
-    it('add to map', function (done) {
-        var layer = new maptalks.ClusterLayer('g');
+    it('should display marker when added with one marker', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter())]);
         layer.on('layerload', function () {
-            expect(layer).to.be.painted();
+            expect(layer).not.to.be.painted(0, -1);
+            expect(layer._getRenderer()._markerLayer).to.be.painted(0, -1);
             done();
         })
          .addTo(map);
     });
 
-    it('add again', function (done) {
-        var layer = new maptalks.ClusterLayer('g', {
-            projection : true,
-            center : map.getCenter(),
-            width : 100,
-            height : 100,
-            cols : [-5, 5],
-            rows : [-5, 5]
-        });
+    it('should display cluster when added with 2 markers', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())]);
+        layer.on('layerload', function () {
+            expect(layer).to.be.painted();
+            expect(layer._getRenderer()._markerLayer).not.to.be.painted(0, -1);
+            done();
+        })
+         .addTo(map);
+    });
+
+    it('should display marker if remove a marker from 2 markers cluster', function (done) {
+        var marker = new maptalks.Marker(map.getCenter());
+        var layer = new maptalks.ClusterLayer('g', [marker, new maptalks.Marker(map.getCenter())]);
+        layer.once('layerload', function () {
+            layer.once('layerload', function () {
+                expect(layer).not.to.be.painted(0, -1);
+                expect(layer._getRenderer()._markerLayer).to.be.painted(0, -1);
+                done();
+            });
+            marker.remove();
+        })
+         .addTo(map);
+    });
+
+    it('should display if added again after removed', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())]);
         layer.once('layerload', function () {
             expect(layer).to.be.painted();
             map.removeLayer(layer);
@@ -45,58 +63,42 @@ describe('ClusterLayer', function () {
         map.addLayer(layer);
     });
 
-    it('with a symbol', function (done) {
-        var symbol = {
-            'lineColor' : '#000',
-            'lineOpacity' : 1,
-            'polygonFill' : 'rgb(0, 0, 0)',
-            'polygonOpacity' : 0.4
-        };
-        var layer = new maptalks.ClusterLayer('g', {
-            projection : true,
-            center : map.getCenter(),
-            width : 100,
-            height : 100,
-            cols : [-5, 5],
-            rows : [-5, 5]
-        }, {
-            'symbol' : symbol
-        });
-        layer.on('layerload', function () {
-            expect(layer).to.be.painted();
-            done();
-        })
-        .addTo(map);
-    });
-
-    describe('test layer with data', function () {
-        function testLayerWithData(done, data) {
-            var layer = new maptalks.ClusterLayer('g', {
-                projection : true,
-                center : map.getCenter(),
-                width : 100,
-                height : 100,
-                cols : [-5, 5],
-                rows : [-5, 5],
-                data : data
-            });
-            layer.on('layerload', function () {
+    it('should show', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())], { visible : false });
+        layer.once('layerload', function () {
+            expect(layer).not.to.be.painted();
+            layer.once('layerload', function () {
                 expect(layer).to.be.painted();
                 done();
-            })
-            .addTo(map);
-        }
-
-        it('with data of text symbol', function (done) {
-            testLayerWithData(done, [
-                [
-                    [1, 2], 4, { 'property' : { 'foo':1 }, 'symbol' : {
-                        'textName' : 'text',
-                        'textSize' : { type:'interval', stops: [[0, 0], [16, 5], [17, 10], [18, 20], [19, 40]] }
-                    }},
-                    [4, [2, 3], { 'symbol' : { 'textName' : 'text', 'textSize' : 14 }}]
-                ]
-            ]);
+            });
+            layer.show();
         });
+        map.addLayer(layer);
     });
+
+    it('should hide', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())]);
+        layer.once('layerload', function () {
+            expect(layer).to.be.painted();
+            layer.once('hide', function () {
+                expect(layer).not.to.be.painted();
+                done();
+            });
+            layer.hide();
+        });
+        map.addLayer(layer);
+    });
+
+    it('should display markers when zoom is bigger than maxClusterZoom', function (done) {
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())], { 'maxClusterZoom' : 16 });
+        layer.on('layerload', function () {
+            expect(layer).not.to.be.painted();
+            expect(layer._getRenderer()._markerLayer).not.to.be.painted(0, -1);
+            expect(layer._getRenderer()._allMarkerLayer).to.be.painted(0, -1);
+            done();
+        })
+         .addTo(map);
+    });
+
+
 });

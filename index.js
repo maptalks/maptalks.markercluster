@@ -87,18 +87,6 @@ ClusterLayer.mergeOptions(options);
 // register ClusterLayer's JSON type for JSON deserialization.
 ClusterLayer.registerJSONType('ClusterLayaer');
 
-// function getGradient(color) {
-//     return 'rgba(' + color.join() + ', 1)';
-//     return {
-//         type : 'radial',
-//         colorStops : [
-//             [0.00, 'rgba(' + color.join() + ', 0)'],
-//             [0.50, 'rgba(' + color.join() + ', 1)'],
-//             [1.00, 'rgba(' + color.join() + ', 1)']
-//         ]
-//     };
-// }
-
 const defaultTextSymbol = {
     'textFaceName'      : '"microsoft yahei"',
     'textSize'          : 16
@@ -158,6 +146,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 this._allMarkerLayer.addGeometry(copyMarkers);
             }
             this._allMarkerLayer.show();
+            this._completeAndFire();
             return;
         }
         this._allMarkerLayer.hide();
@@ -387,7 +376,17 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
     }
 
     _completeAndFire() {
-        if (this._markerLayer && this._markerLayer.getCount() > 0 && !this._markerLayer.isLoaded()) {
+        const zoom = this.getMap().getZoom();
+        const maxClusterZoom = this.layer.options['maxClusterZoom'];
+        if (maxClusterZoom &&  zoom > maxClusterZoom) {
+            if (this._allMarkerLayer && this._allMarkerLayer.getCount() > 0 && !this._allMarkerLayer.isLoaded()) {
+                this._allMarkerLayer.once('layerload', () => {
+                    this.completeRender();
+                });
+            } else {
+                this.completeRender();
+            }
+        } else if (this._markerLayer && this._markerLayer.getCount() > 0 && !this._markerLayer.isLoaded()) {
             this._markerLayer.once('layerload', () => {
                 this.completeRender();
             });

@@ -33,6 +33,7 @@
     "karma-ie-launcher": "^1.0.0",
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.1",
+    "maptalks": "^0.16.0",
     "maptalks-build-helpers": "github:maptalks/maptalks-build-helpers",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5"

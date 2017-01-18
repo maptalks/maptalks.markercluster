@@ -9,7 +9,9 @@ const testHelper = new TestHelper();
 const karmaConfig = require('./karma.config');
 
 gulp.task('build', () => {
-    return bundleHelper.bundle('index.js');
+    const rollupConfig = bundleHelper.getDefaultRollupConfig();
+    rollupConfig['sourceMap'] = false;
+    return bundleHelper.bundle('index.js', rollupConfig);
 });
 
 gulp.task('minify', ['build'], () => {
@@ -20,7 +22,15 @@ gulp.task('watch', ['build'], () => {
     gulp.watch(['index.js', './gulpfile.js'], ['build']);
 });
 
-gulp.task('test', ['build'], () => {
+gulp.task('runTest', () => {
+    testHelper.test(karmaConfig);
+});
+
+gulp.task('test', ['build', 'runTest']);
+
+gulp.task('tdd', ['build'], () => {
+    karmaConfig.singleRun = false;
+    gulp.watch(['index.js'], ['test']);
     testHelper.test(karmaConfig);
 });
 
