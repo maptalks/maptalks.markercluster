@@ -1,5 +1,5 @@
-# maptalks.clusterlayer.js
+# maptalks.markercluster
 
-[![CircleCI](https://circleci.com/gh/maptalks/maptalks.clusterlayer.js.svg?style=shield)](https://circleci.com/gh/MapTalks/maptalks.clusterlayer.js)
+[![CircleCI](https://circleci.com/gh/maptalks/maptalks.markercluster.svg?style=shield)](https://circleci.com/gh/MapTalks/maptalks.markercluster)
 
 A layer of maptalks to cluster markers.

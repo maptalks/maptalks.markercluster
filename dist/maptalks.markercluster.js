@@ -1,5 +1,5 @@
 /*!
- * maptalks.clusterlayer v2.0.0
+ * maptalks.markercluster v2.0.0
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */

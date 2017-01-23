@@ -1,11 +1,11 @@
 {
-  "name": "maptalks.clusterlayer",
+  "name": "maptalks.markercluster",
   "version": "2.0.0",
   "description": "A layer of maptalks to cluster markers.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/maptalks/maptalks.clusterlayer.js.git"
+    "url": "https://github.com/maptalks/maptalks.markercluster.git"
   },
   "main": "dist/maptalks.clusterlayer.js",
   "scripts": {
@@ -34,7 +34,7 @@
     "karma-mocha": "^1.3.0",
     "karma-mocha-reporter": "^2.2.1",
     "maptalks": "^0.16.0",
-    "maptalks-build-helpers": "github:maptalks/maptalks-build-helpers",
+    "maptalks-build-helpers": "^0.1.0",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5"
   },

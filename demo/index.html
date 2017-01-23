@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>maptalks.markercluster demo</title>
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css">
+    <script type="text/javascript" src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+    <script type="text/javascript" src="../dist/maptalks.markercluster.js"></script>
+    <script type="text/javascript" src="realworld.50000.1.js"></script>
+    <script type="text/javascript" src="realworld.50000.2.js"></script>
+    <style>
+        html,body{
+            margin:0px;
+        }
+        #map {
+            width: 960px;
+            height:600px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script type="text/javascript" >
+    //This demos is inspired by Leaflet.MarkerCluster
+    //https://github.com/Leaflet/Leaflet.markercluster
+
+    var map = new maptalks.Map("map",{
+        center:   [175.27, -37.79],
+        zoom   :  10,
+        attributionControl : {
+          'content' : '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        },
+        baseLayer : new maptalks.TileLayer('tile',{
+            'urlTemplate' : 'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+            'subdomains'  : ['a','b','c','d','e']
+        })
+    });
+
+    var markers = [];
+    // data from realworld.50000.1.js
+    for (var i = 0; i < addressPoints.length; i++) {
+        var a = addressPoints[i];
+        markers.push(new maptalks.Marker([a[1], a[0]]));
+    }
+    // data from realworld.50000.2.js
+    for (var i = 0; i < addressPoints2.length; i++) {
+        var a = addressPoints2[i];
+        markers.push(new maptalks.Marker([a[1], a[0]]));
+    }
+
+    var clusterLayer = new maptalks.ClusterLayer('cluster', markers, {
+        'maxClusterZoom' : 16,
+        //"count" is an internal variable: marker count in the cluster.
+        'symbol' :{
+            'markerType' : 'ellipse',
+            'markerFill' : { property:'count', type:'interval', stops: [[0, 'rgb(135, 196, 240)'], [9, 'rgba(222, 125, 44, 1)'], [99, 'rgb(156, 38, 50)']] },
+            'markerFillOpacity' : 1,
+            'markerLineOpacity' : 1,
+            'markerLineWidth' : 3,
+            'markerLineColor' : '#fff',
+            'markerWidth'  : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] },
+            'markerHeight' : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] }
+        },
+        'textSymbol' : {
+            'textFaceName' : 'monospace',
+            'textSize'  : 20,
+            'textFill'  : '#fff'
+        },
+        'drawClusterText' : true
+    });
+
+    map.addLayer(clusterLayer);
+</script>
+</body>
+</html>
