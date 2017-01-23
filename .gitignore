@@ -1,6 +1,7 @@
 .tmp/
 .idea/
 *.iml
+*.gz
 .tern-port
 doc/
 
