@@ -141,7 +141,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 this._allMarkerLayer.clear();
                 var copyMarkers = [];
                 this.layer.forEach(function (g) {
-                    copyMarkers.push(g.copy().setSymbol(markerSymbol).copyEventListeners(g));
+                    copyMarkers.push(g.copy().setSymbol((markerSymbol || g.getSymbol())).copyEventListeners(g));
                 });
                 this._allMarkerLayer.addGeometry(copyMarkers);
             }
@@ -159,10 +159,11 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         var extent = map.getContainerExtent(),
             marker, markers = [], clusters = [],
             pt, pExt, sprite, width, height, font;
-        for (var p in zoomClusters) {
+        for (let p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
             if (zoomClusters[p]['count'] === 1) {
-                marker = zoomClusters[p]['children'][0].copy().setSymbol(markerSymbol).copyEventListeners(zoomClusters[p]['children'][0]);
+                let source = zoomClusters[p]['children'][0];
+                marker = source.copy().setSymbol((markerSymbol || source.getSymbol())).copyEventListeners(zoomClusters[p]['children'][0]);
                 marker._cluster = zoomClusters[p];
                 markers.push(marker);
                 continue;
@@ -175,9 +176,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
             if (!extent.intersects(pExt)) {
                 continue;
             }
-            font = maptalks.Util.getFont(this._textSymbol);
+            font = maptalks.StringUtil.getFont(this._textSymbol);
             if (!zoomClusters[p]['textSize']) {
-                zoomClusters[p]['textSize'] = maptalks.Util.stringLength(zoomClusters[p]['count'], font).toPoint()._multi(1 / 2);
+                zoomClusters[p]['textSize'] = maptalks.StringUtil.stringLength(zoomClusters[p]['count'], font).toPoint()._multi(1 / 2);
             }
             clusters.push(zoomClusters[p]);
         }
@@ -259,6 +260,11 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         }
         this._currentGrid = old;
         return null;
+    }
+
+    onGeometrySymbolChange() {
+        this._markerLayer.clear();
+        this.render(true);
     }
 
     onSymbolChanged() {
