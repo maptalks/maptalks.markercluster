@@ -99,6 +99,7 @@ describe('ClusterLayer', function () {
         })
          .addTo(map);
     });
-
+    //TODO 1. update marker's symbol
+    //TODO 2. update marker's symbol when zoom > maxClusterZoom
 
 });

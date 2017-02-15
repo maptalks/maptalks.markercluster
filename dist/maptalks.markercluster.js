@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v2.0.1
+ * maptalks.markercluster v2.0.2
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
@@ -247,8 +247,16 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
     };
 
     _class.prototype.onGeometryPositionChange = function onGeometryPositionChange() {
+        this._markerLayer.clear();
+        this._allMarkerLayer.clear();
         this._needRedraw = true;
         this.render();
+    };
+
+    _class.prototype.onGeometrySymbolChange = function onGeometrySymbolChange() {
+        this._markerLayer.clear();
+        this._allMarkerLayer.clear();
+        this.render(true);
     };
 
     _class.prototype.onRemove = function onRemove() {
@@ -304,11 +312,6 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
         }
         this._currentGrid = old;
         return null;
-    };
-
-    _class.prototype.onGeometrySymbolChange = function onGeometrySymbolChange() {
-        this._markerLayer.clear();
-        this.render(true);
     };
 
     _class.prototype.onSymbolChanged = function onSymbolChanged() {

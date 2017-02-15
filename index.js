@@ -113,7 +113,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         this._allMarkerLayer = new maptalks.VectorLayer(allId, { 'visible' : false }).addTo(layer.getMap());
         this._animated = true;
         this._refreshStyle();
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
     }
 
     checkResources() {
@@ -150,10 +150,10 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
             return;
         }
         this._allMarkerLayer.hide();
-        if (this._needRedraw) {
+        if (this._clusterNeedRedraw) {
             this._clearDataCache();
             this._computeGrid();
-            this._needRedraw = false;
+            this._clusterNeedRedraw = false;
         }
         var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
         var extent = map.getContainerExtent(),
@@ -192,18 +192,26 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
     }
 
     onGeometryAdd() {
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
         this.render();
     }
 
     onGeometryRemove() {
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
         this.render();
     }
 
     onGeometryPositionChange() {
-        this._needRedraw = true;
+        this._markerLayer.clear();
+        this._allMarkerLayer.clear();
+        this._clusterNeedRedraw = true;
         this.render();
+    }
+
+    onGeometrySymbolChange() {
+        this._markerLayer.clear();
+        this._allMarkerLayer.clear();
+        this.render(true);
     }
 
     onRemove() {
@@ -237,7 +245,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         return true;
     }
 
-
     identify(point) {
         var map = this.getMap();
         point = map._pointToContainerPoint(point);
@@ -260,11 +267,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         }
         this._currentGrid = old;
         return null;
-    }
-
-    onGeometrySymbolChange() {
-        this._markerLayer.clear();
-        this.render(true);
     }
 
     onSymbolChanged() {
