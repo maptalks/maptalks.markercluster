@@ -21,7 +21,6 @@ var options = {
     'maxClusterRadius': 160,
     'geometryEvents': false,
     'symbol': null,
-    'markerSymbol': null,
     'drawClusterText': true,
     'textSymbol': null,
     'animation': true,
