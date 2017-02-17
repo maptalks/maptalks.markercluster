@@ -7,19 +7,23 @@ describe('ClusterLayer', function () {
         document.body.appendChild(container);
         map = new maptalks.Map(container, {
             center : [0, 0],
-            zoom : 17
+            zoom : 17,
+            baseLayer : new maptalks.TileLayer('tile',{
+                'urlTemplate' : 'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+                'subdomains'  : ['a','b','c','d','e']
+            })
         });
     });
 
     afterEach(function () {
         map.remove();
+        maptalks.DomUtil.removeDomNode(container);
     });
 
     it('should display marker when added with one marker', function (done) {
         var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter())]);
         layer.on('layerload', function () {
-            expect(layer).not.to.be.painted(0, -1);
-            expect(layer._getRenderer()._markerLayer).to.be.painted(0, -1);
+            expect(layer).to.be.painted(0, -1);
             done();
         })
          .addTo(map);
@@ -29,7 +33,6 @@ describe('ClusterLayer', function () {
         var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())]);
         layer.on('layerload', function () {
             expect(layer).to.be.painted();
-            expect(layer._getRenderer()._markerLayer).not.to.be.painted(0, -1);
             done();
         })
          .addTo(map);
@@ -40,8 +43,7 @@ describe('ClusterLayer', function () {
         var layer = new maptalks.ClusterLayer('g', [marker, new maptalks.Marker(map.getCenter())]);
         layer.once('layerload', function () {
             layer.once('layerload', function () {
-                expect(layer).not.to.be.painted(0, -1);
-                expect(layer._getRenderer()._markerLayer).to.be.painted(0, -1);
+                expect(layer).to.be.painted(0, -1);
                 done();
             });
             marker.remove();
@@ -92,14 +94,26 @@ describe('ClusterLayer', function () {
     it('should display markers when zoom is bigger than maxClusterZoom', function (done) {
         var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())], { 'maxClusterZoom' : 16 });
         layer.on('layerload', function () {
-            expect(layer).not.to.be.painted();
-            expect(layer._getRenderer()._markerLayer).not.to.be.painted(0, -1);
-            expect(layer._getRenderer()._allMarkerLayer).to.be.painted(0, -1);
+            expect(layer).to.be.painted(0, -1, [221, 52, 52]);
             done();
         })
          .addTo(map);
     });
-    //TODO 1. update marker's symbol
-    //TODO 2. update marker's symbol when zoom > maxClusterZoom
+
+    it('should be able to update marker\' symbol', function (done) {
+        var marker = new maptalks.Marker(map.getCenter());
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), marker], { 'maxClusterZoom' : 16 });
+        layer.once('layerload', function () {
+            layer.once('layerload', function () {
+                expect(layer).to.be.painted(0, 0, [255, 255, 255]);
+                done();
+            });
+            marker.setSymbol({
+                'markerType' : 'ellipse',
+                'markerFill'  : '#fff'
+            })
+        })
+         .addTo(map);
+    });
 
 });
