@@ -7,11 +7,7 @@ describe('ClusterLayer', function () {
         document.body.appendChild(container);
         map = new maptalks.Map(container, {
             center : [0, 0],
-            zoom : 17,
-            baseLayer : new maptalks.TileLayer('tile',{
-                'urlTemplate' : 'http://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
-                'subdomains'  : ['a','b','c','d','e']
-            })
+            zoom : 17
         });
     });
 
@@ -111,7 +107,7 @@ describe('ClusterLayer', function () {
             marker.setSymbol({
                 'markerType' : 'ellipse',
                 'markerFill'  : '#fff'
-            })
+            });
         })
          .addTo(map);
     });
