@@ -150,7 +150,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
         _this2._allMarkerLayer = new maptalks.VectorLayer(allId, { 'visible': false }).addTo(layer.getMap());
         _this2._animated = true;
         _this2._refreshStyle();
-        _this2._needRedraw = true;
+        _this2._clusterNeedRedraw = true;
         return _this2;
     }
 
@@ -188,10 +188,10 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
             return;
         }
         this._allMarkerLayer.hide();
-        if (this._needRedraw) {
+        if (this._clusterNeedRedraw) {
             this._clearDataCache();
             this._computeGrid();
-            this._needRedraw = false;
+            this._clusterNeedRedraw = false;
         }
         var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
         var extent = map.getContainerExtent(),
@@ -237,19 +237,19 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
     };
 
     _class.prototype.onGeometryAdd = function onGeometryAdd() {
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
         this.render();
     };
 
     _class.prototype.onGeometryRemove = function onGeometryRemove() {
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
         this.render();
     };
 
     _class.prototype.onGeometryPositionChange = function onGeometryPositionChange() {
         this._markerLayer.clear();
         this._allMarkerLayer.clear();
-        this._needRedraw = true;
+        this._clusterNeedRedraw = true;
         this.render();
     };
 
