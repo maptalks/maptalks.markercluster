@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/maptalks/maptalks.markercluster.git"
   },
-  "main": "dist/maptalks.clusterlayer.js",
+  "main": "dist/maptalks.markercluster.js",
   "scripts": {
     "lint": "eslint index.js test/**/*.js",
     "test": "gulp test",
