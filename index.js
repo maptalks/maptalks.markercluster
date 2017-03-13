@@ -79,6 +79,16 @@ export class ClusterLayer extends maptalks.VectorLayer {
         json['type'] = 'ClusterLayer';
         return json;
     }
+    /**
+    * Get the ClusterLayer's current clusters
+    * @return {Object} layer's clusters
+    **/
+    getClusters() {
+        if (!this._currentClusters) {
+            return null;
+        }
+        return this._currentClusters;
+    }
 }
 
 // merge to define ClusterLayer's default options.
@@ -292,11 +302,19 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
     }
 
     _drawLayer(clusters, markers, matrix) {
-        this._currentClusters = clusters;
+        this._currentClusters = this.layer._currentClusters = clusters;
         const layer = this.layer;
-        if (layer.options['animation'] && this._animated && this._inout === 'out') {
+        var dr = [0, 1];
+        //if (layer.options['animation'] && this._animated && this._inout === 'out') {
+        if (layer.options['animation'] && this._animated && this._inout) {
+            if (this._inout === 'in') {
+                dr = [1, 0];
+                clusters = this._zoomInClusters;
+            } else if (this._inout === 'out') {
+                dr = [0, 1];
+            }
             this._player = maptalks.animation.Animation.animate(
-                { 'd' : [0, 1] },
+                { 'd' : dr },
                 { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
                 frame => {
                     if (frame.state.playState === 'finished') {
@@ -313,7 +331,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 }
             )
             .play();
-            this._drawClusters(clusters, 0, matrix);
+            this._drawClusters(clusters, dr[0], matrix);
             this.requestMapToRender();
         } else {
             this._drawClusters(clusters, 1, matrix);
@@ -598,7 +616,18 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         // if (this._markerLayer.getCount() > 0) {
 
         // }
+        var zoom = this.getMap().getZoom();
         this._computeGrid();
+        if (this._inout === 'in') {
+            if (!this._clusterCache[zoom + 1]) {
+                this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
+            }
+            var tempCluster = this._clusterCache[zoom + 1].clusters;
+            this._zoomInClusters = [];
+            for (var p in tempCluster) {
+                this._zoomInClusters.push(tempCluster[p]);
+            }
+        }
         maptalks.renderer.CanvasRenderer.prototype.onZoomEnd.apply(this, arguments);
     }
 
