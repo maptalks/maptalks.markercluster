@@ -90,7 +90,7 @@ describe('ClusterLayer', function () {
     it('should display markers when zoom is bigger than maxClusterZoom', function (done) {
         var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())], { 'maxClusterZoom' : 16 });
         layer.on('layerload', function () {
-            expect(layer).to.be.painted(0, -1, [221, 52, 52]);
+            expect(layer).to.be.painted(0, -1, [223, 50, 50]);
             done();
         })
          .addTo(map);
