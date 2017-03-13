@@ -304,7 +304,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
 
     _class.prototype.identify = function identify(point) {
         var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }

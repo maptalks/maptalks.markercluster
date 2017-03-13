@@ -257,7 +257,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
 
     identify(point) {
         var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }
