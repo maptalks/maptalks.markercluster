@@ -4,7 +4,6 @@ const options = {
     'maxClusterRadius' : 160,
     'geometryEvents' : false,
     'symbol' : null,
-    'markerSymbol' : null,
     'drawClusterText' : true,
     'textSymbol' : null,
     'animation' : true,
@@ -103,14 +102,10 @@ const defaultSymbol = {
     'markerHeight' : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] }
 };
 
-ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayLayerCanvasRenderer {
+ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLayerCanvasRenderer {
 
     constructor(layer) {
         super(layer);
-        const id = maptalks.INTERNAL_LAYER_PREFIX + '_cluster_' + maptalks.Util.GUID();
-        this._markerLayer = new maptalks.VectorLayer(id).addTo(layer.getMap());
-        var allId = maptalks.INTERNAL_LAYER_PREFIX + '_cluster_all_' + maptalks.Util.GUID();
-        this._allMarkerLayer = new maptalks.VectorLayer(allId, { 'visible' : false }).addTo(layer.getMap());
         this._animated = true;
         this._refreshStyle();
         this._clusterNeedRedraw = true;
@@ -131,41 +126,29 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         }
         var map = this.getMap();
         var zoom = map.getZoom();
-        var markerSymbol = this.layer.options['markerSymbol'];
         var maxClusterZoom = this.layer.options['maxClusterZoom'];
         if (maxClusterZoom &&  zoom > maxClusterZoom) {
-            this.prepareCanvas();
             delete this._currentClusters;
-            this._markerLayer.clear();
-            if (this._allMarkerLayer.getCount() !== this.layer.getCount()) {
-                this._allMarkerLayer.clear();
-                var copyMarkers = [];
-                this.layer.forEach(function (g) {
-                    copyMarkers.push(g.copy().setSymbol((markerSymbol || g.getSymbol())).copyEventListeners(g));
-                });
-                this._allMarkerLayer.addGeometry(copyMarkers);
-            }
-            this._allMarkerLayer.show();
-            this._completeAndFire();
+            this._markersToDraw = this.layer._geoList;
+            super.draw.apply(this, arguments);
             return;
         }
-        this._allMarkerLayer.hide();
         if (this._clusterNeedRedraw) {
             this._clearDataCache();
             this._computeGrid();
             this._clusterNeedRedraw = false;
         }
         var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
+        this._markersToDraw = [];
         var extent = map.getContainerExtent(),
-            marker, markers = [], clusters = [],
+            clusters = [],
             pt, pExt, sprite, width, height, font;
         for (let p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
             if (zoomClusters[p]['count'] === 1) {
-                let source = zoomClusters[p]['children'][0];
-                marker = source.copy().setSymbol((markerSymbol || source.getSymbol())).copyEventListeners(zoomClusters[p]['children'][0]);
+                let marker = zoomClusters[p]['children'][0];
                 marker._cluster = zoomClusters[p];
-                markers.push(marker);
+                this._markersToDraw.push(marker);
                 continue;
             }
             sprite = this._getSprite();
@@ -182,13 +165,26 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
             }
             clusters.push(zoomClusters[p]);
         }
-        this._drawLayer(clusters, markers);
+        this._drawLayer(clusters);
+    }
+
+    _forEachGeo(fn, context) {
+        if (this._markersToDraw) {
+            this._markersToDraw.forEach((g) => {
+                if (context) {
+                    fn.call(context, g);
+                } else {
+                    fn(g);
+                }
+            });
+        }
     }
 
     drawOnZooming() {
         if (this._currentClusters) {
             this._drawClusters(this._currentClusters, 1);
         }
+        super.drawOnZooming.apply(this, arguments);
     }
 
     onGeometryAdd() {
@@ -202,40 +198,12 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
     }
 
     onGeometryPositionChange() {
-        this._markerLayer.clear();
-        this._allMarkerLayer.clear();
         this._clusterNeedRedraw = true;
         this.render();
     }
 
-    onGeometrySymbolChange() {
-        this._markerLayer.clear();
-        this._allMarkerLayer.clear();
-        this.render(true);
-    }
-
     onRemove() {
         this._clearDataCache();
-        this._markerLayer.remove();
-        this._allMarkerLayer.remove();
-    }
-
-    show() {
-        this._markerLayer.show();
-        this._allMarkerLayer.show();
-        maptalks.renderer.CanvasRenderer.prototype.show.call(this);
-    }
-
-    hide() {
-        this._markerLayer.hide();
-        this._allMarkerLayer.hide();
-        maptalks.renderer.CanvasRenderer.prototype.hide.call(this);
-    }
-
-    setZIndex(z) {
-        this._markerLayer.setZIndex(z);
-        this._allMarkerLayer.setZIndex(z);
-        maptalks.renderer.CanvasRenderer.prototype.setZIndex.call(this, z);
     }
 
     transform(matrix) {
@@ -283,16 +251,14 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
     _refreshStyle() {
         var symbol = this.layer.options['symbol'] || defaultSymbol;
         var textSymbol = this.layer.options['textSymbol'] || defaultTextSymbol;
-        // var symbolizer = maptalks.symbolizer.VectorMarkerSymbolizer;
-        // var style = symbolizer.translateLineAndFill(symbol);
         var argFn =  () => [this.getMap().getZoom(), this._currentGrid];
-        // this._style = maptalks.MapboxUtil.loadFunctionTypes(style, argFn);
         this._symbol = maptalks.MapboxUtil.loadFunctionTypes(symbol, argFn);
         this._textSymbol = maptalks.MapboxUtil.loadFunctionTypes(textSymbol, argFn);
     }
 
-    _drawLayer(clusters, markers, matrix) {
+    _drawLayer(clusters) {
         this._currentClusters = clusters;
+        delete this._clusterMaskExtent;
         const layer = this.layer;
         if (layer.options['animation'] && this._animated && this._inout === 'out') {
             this._player = maptalks.animation.Animation.animate(
@@ -300,51 +266,51 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
                 frame => {
                     if (frame.state.playState === 'finished') {
-                        if (this._markerLayer.getCount() > 0) {
-                            this._markerLayer.clear();
-                        }
-                        this._markerLayer.addGeometry(markers);
                         this._animated = false;
-                        this._completeAndFire();
+                        this._drawMarkers();
+                        this.completeRender();
                     } else {
-                        this._drawClusters(clusters, frame.styles.d, matrix);
+                        this._drawClusters(clusters, frame.styles.d);
                         this.requestMapToRender();
                     }
                 }
             )
             .play();
-            this._drawClusters(clusters, 0, matrix);
+            this._drawClusters(clusters, 0);
             this.requestMapToRender();
         } else {
-            this._drawClusters(clusters, 1, matrix);
-            if (!matrix && (this._animated || this._markerLayer.getCount() === 0)) {
-                if (this._markerLayer.getCount() > 0) {
-                    this._markerLayer.clear();
-                }
-                this._markerLayer.addGeometry(markers);
-            }
             this._animated = false;
-            this._completeAndFire();
+            this._drawClusters(clusters, 1);
+            this._drawMarkers();
+            this.completeRender();
         }
+    }
+
+    _drawMarkers() {
+        super._drawGeos(this._clusterMaskExtent);
+        this._isBlank = false;
     }
 
     _drawClusters(clusters, ratio, matrix) {
         matrix = matrix ? matrix['container'] : null;
-        this.prepareCanvas();
+        this._clusterMaskExtent = this.prepareCanvas();
         var map = this.getMap(),
             drawn = {};
-        clusters.forEach(c => {
-            if (c.parent) {
-                var parent = map._prjToContainerPoint(c.parent['center']);
-                if (!drawn[c.parent.key]) {
-                    if (matrix) {
-                        parent = matrix.applyToPointInstance(parent);
+        // draw parent (for animation)
+        if (this.layer.options['animation'] && ratio < 1) {
+            clusters.forEach(c => {
+                if (c.parent) {
+                    var parent = map._prjToContainerPoint(c.parent['center']);
+                    if (!drawn[c.parent.key]) {
+                        if (matrix) {
+                            parent = matrix.applyToPointInstance(parent);
+                        }
+                        drawn[c.parent.key] = 1;
+                        this._drawCluster(parent, c.parent, 1 - ratio);
                     }
-                    drawn[c.parent.key] = 1;
-                    this._drawCluster(parent, c.parent, 1 - ratio);
                 }
-            }
-        });
+            });
+        }
         if (ratio === 0) {
             return;
         }
@@ -383,25 +349,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         ctx.globalAlpha = opacity;
     }
 
-    _completeAndFire() {
-        const zoom = this.getMap().getZoom();
-        const maxClusterZoom = this.layer.options['maxClusterZoom'];
-        if (maxClusterZoom &&  zoom > maxClusterZoom) {
-            if (this._allMarkerLayer && this._allMarkerLayer.getCount() > 0 && !this._allMarkerLayer.isLoaded()) {
-                this._allMarkerLayer.once('layerload', () => {
-                    this.completeRender();
-                });
-            } else {
-                this.completeRender();
-            }
-        } else if (this._markerLayer && this._markerLayer.getCount() > 0 && !this._markerLayer.isLoaded()) {
-            this._markerLayer.once('layerload', () => {
-                this.completeRender();
-            });
-        } else {
-            this.completeRender();
-        }
-    }
 
     _getSprite() {
         if (!this._spriteCache) {
@@ -409,7 +356,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
         }
         var key = maptalks.Util.getSymbolStamp(this._symbol);
         if (!this._spriteCache[key]) {
-            this._spriteCache[key] = new maptalks.Marker([0, 0], { 'symbol' : this._symbol })._getSprite(this.resources);
+            this._spriteCache[key] = new maptalks.Marker([0, 0], { 'symbol' : this._symbol })._getSprite(this.resources, this.getMap().CanvasClass);
         }
         return this._spriteCache[key];
     }
@@ -497,10 +444,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
                 grids[key]['children'].push(points[i].geometry);
             }
         }
-        // return {
-        //     'clusters' : grids,
-        //     'clusterMap' : grids
-        // };
         return this._mergeClusters(grids, r / 2);
     }
 
@@ -583,28 +526,18 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
 
     onZoomStart(param) {
         this._inout = param['from'] > param['to'] ? 'in' : 'out';
-        var maxClusterZoom = this.layer.options['maxClusterZoom'];
-        if (maxClusterZoom && param['to'] <= maxClusterZoom) {
-            this._allMarkerLayer.hide();
-        }
-        // if (this._markerLayer.getCount() > 0) {
-        //     this._markerLayer.clear();
-        // }
         this._stopAnim();
+        super.onZoomStart(param);
     }
 
     onZoomEnd() {
         this._animated = true;
-        // if (this._markerLayer.getCount() > 0) {
-
-        // }
         this._computeGrid();
-        maptalks.renderer.CanvasRenderer.prototype.onZoomEnd.apply(this, arguments);
+        super.onZoomEnd.apply(this, arguments);
     }
 
     _clearDataCache() {
         this._stopAnim();
-        this._markerLayer.clear();
         delete this._markerExtent;
         delete this._markerPoints;
         delete this._clusterCache;
