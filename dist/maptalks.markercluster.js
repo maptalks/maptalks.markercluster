@@ -117,10 +117,11 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
 
 
     ClusterLayer.prototype.getClusters = function getClusters() {
-        if (!this._currentClusters) {
-            return null;
+        var renderer$$1 = this._getRenderer();
+        if (renderer$$1) {
+            return renderer$$1._currentClusters || [];
         }
-        return this._currentClusters;
+        return [];
     };
 
     return ClusterLayer;
@@ -304,7 +305,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ov) {
 
     _class.prototype.identify = function identify(point) {
         var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }

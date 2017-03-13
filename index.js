@@ -84,10 +84,11 @@ export class ClusterLayer extends maptalks.VectorLayer {
     * @return {Object} layer's clusters
     **/
     getClusters() {
-        if (!this._currentClusters) {
-            return null;
+        const renderer = this._getRenderer();
+        if (renderer) {
+            return renderer._currentClusters || [];
         }
-        return this._currentClusters;
+        return [];
     }
 }
 
@@ -257,7 +258,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.OverlayL
 
     identify(point) {
         var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }
