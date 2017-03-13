@@ -341,7 +341,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
         ctx.globalAlpha = opacity * op;
         if (sprite) {
-            var pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2)._substract(1E-6, 1E-6)._round();
+            var pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2);
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
