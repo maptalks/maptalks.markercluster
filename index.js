@@ -251,10 +251,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     _refreshStyle() {
         var symbol = this.layer.options['symbol'] || defaultSymbol;
         var textSymbol = this.layer.options['textSymbol'] || defaultTextSymbol;
-        // var symbolizer = maptalks.symbolizer.VectorMarkerSymbolizer;
-        // var style = symbolizer.translateLineAndFill(symbol);
         var argFn =  () => [this.getMap().getZoom(), this._currentGrid];
-        // this._style = maptalks.MapboxUtil.loadFunctionTypes(style, argFn);
         this._symbol = maptalks.MapboxUtil.loadFunctionTypes(symbol, argFn);
         this._textSymbol = maptalks.MapboxUtil.loadFunctionTypes(textSymbol, argFn);
     }
@@ -447,10 +444,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 grids[key]['children'].push(points[i].geometry);
             }
         }
-        // return {
-        //     'clusters' : grids,
-        //     'clusterMap' : grids
-        // };
         return this._mergeClusters(grids, r / 2);
     }
 
@@ -533,29 +526,18 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     onZoomStart(param) {
         this._inout = param['from'] > param['to'] ? 'in' : 'out';
-        // var maxClusterZoom = this.layer.options['maxClusterZoom'];
-        // if (maxClusterZoom && param['to'] <= maxClusterZoom) {
-        //     this._allMarkerLayer.hide();
-        // }
-        // if (this._markerLayer.getCount() > 0) {
-        //     this._markerLayer.clear();
-        // }
         this._stopAnim();
         super.onZoomStart(param);
     }
 
     onZoomEnd() {
         this._animated = true;
-        // if (this._markerLayer.getCount() > 0) {
-
-        // }
         this._computeGrid();
         super.onZoomEnd.apply(this, arguments);
     }
 
     _clearDataCache() {
         this._stopAnim();
-        // this._markerLayer.clear();
         delete this._markerExtent;
         delete this._markerPoints;
         delete this._clusterCache;
