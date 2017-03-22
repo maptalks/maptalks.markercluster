@@ -35,7 +35,7 @@ export class ClusterLayer extends maptalks.VectorLayer {
         layer.addGeometry(geometries);
         return layer;
     }
-
+    //
     onConfig(conf) {
         if (conf.hasOwnProperty('symbol')) {
             if (this._getRenderer()) {
