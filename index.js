@@ -244,7 +244,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this.draw();
     }
 
-    isUpdateWhenZooming() {
+    isRenderOnZooming() {
         return true;
     }
 
