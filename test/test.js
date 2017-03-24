@@ -88,9 +88,13 @@ describe('ClusterLayer', function () {
     });
 
     it('should display markers when zoom is bigger than maxClusterZoom', function (done) {
-        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), new maptalks.Marker(map.getCenter())], { 'maxClusterZoom' : 16 });
+        var symbol = {
+            'markerType' : 'ellipse',
+            'markerFill'  : '#fff'
+        };
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter(), { symbol : symbol }), new maptalks.Marker(map.getCenter(), { symbol : symbol })], { 'maxClusterZoom' : 16 });
         layer.on('layerload', function () {
-            expect(layer).to.be.painted(0, -1, [223, 50, 50]);
+            expect(layer).to.be.painted(0, -1, [255, 255, 255]);
             done();
         })
          .addTo(map);
@@ -112,4 +116,24 @@ describe('ClusterLayer', function () {
          .addTo(map);
     });
 
+    it('should be able to update marker\' symbol by style', function (done) {
+        var marker = new maptalks.Marker(map.getCenter());
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), marker], { 'maxClusterZoom' : 16 });
+        layer.once('layerload', function () {
+            layer.once('layerload', function () {
+                expect(layer).to.be.painted(0, 0, [255, 255, 255]);
+                done();
+            });
+            layer.setStyle([
+                {
+                    filter : true,
+                    symbol : {
+                        'markerType' : 'ellipse',
+                        'markerFill'  : '#fff'
+                    }
+                }
+            ]);
+        })
+         .addTo(map);
+    });
 });
