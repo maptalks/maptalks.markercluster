@@ -5,7 +5,7 @@
 
 A plugin of [maptalks.js](https://github.com/maptalks/maptalks.js) to draw markers as clusters.
 
-![screenshot]()
+![screenshot](https://cloud.githubusercontent.com/assets/13678919/25312742/3036acb0-2853-11e7-8e9b-baf58e318a9b.jpg)
 
 ## Install
   
