@@ -26,22 +26,13 @@ export class ClusterLayer extends maptalks.VectorLayer {
         const geoJSONs = json['geometries'];
         const geometries = [];
         for (let i = 0; i < geoJSONs.length; i++) {
-            let geo = maptalks.Geometry.fromJSON(geoJSONs[i]);
+            const geo = maptalks.Geometry.fromJSON(geoJSONs[i]);
             if (geo) {
                 geometries.push(geo);
             }
         }
         layer.addGeometry(geometries);
         return layer;
-    }
-
-    onConfig(conf) {
-        if (conf.hasOwnProperty('symbol')) {
-            if (this._getRenderer()) {
-                this._getRenderer().onSymbolChanged();
-            }
-        }
-        return super.onConfig(conf);
     }
 
     addMarker(markers) {
@@ -57,8 +48,23 @@ export class ClusterLayer extends maptalks.VectorLayer {
         return super.addGeometry.apply(this, arguments);
     }
 
+    onConfig(conf) {
+        super.onConfig(conf);
+        if (conf['maxClusterRadius'] ||
+            conf['symbol'] ||
+            conf['drawClusterText'] ||
+            conf['textSymbol'] ||
+            conf['maxClusterZoom']) {
+            const renderer = this._getRenderer();
+            if (renderer) {
+                renderer.render();
+            }
+        }
+        return this;
+    }
+
     /**
-     * Identify the clusters on the given container point
+     * Identify the clusters on the given coordinate
      * @param  {maptalks.Point} point   - 2d point
      * @return {Object}  result: { center : [cluster's center], children : [geometries in the cluster] }
      */
@@ -84,7 +90,7 @@ export class ClusterLayer extends maptalks.VectorLayer {
 ClusterLayer.mergeOptions(options);
 
 // register ClusterLayer's JSON type for JSON deserialization.
-ClusterLayer.registerJSONType('ClusterLayaer');
+ClusterLayer.registerJSONType('ClusterLayer');
 
 const defaultTextSymbol = {
     'textFaceName'      : '"microsoft yahei"',
@@ -112,8 +118,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     checkResources() {
-        var resources = super.checkResources.apply(this, arguments);
-        var res = maptalks.Util.getExternalResources(this.layer.options['symbol'] || defaultSymbol, true);
+        const resources = super.checkResources.apply(this, arguments);
+        const res = maptalks.Util.getExternalResources(this.layer.options['symbol'] || defaultSymbol, true);
         if (res) {
             resources.push.apply(resources, res);
         }
@@ -124,9 +130,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         if (!this.canvas) {
             this.prepareCanvas();
         }
-        var map = this.getMap();
-        var zoom = map.getZoom();
-        var maxClusterZoom = this.layer.options['maxClusterZoom'];
+        const map = this.getMap();
+        const zoom = map.getZoom();
+        const maxClusterZoom = this.layer.options['maxClusterZoom'];
         if (maxClusterZoom &&  zoom > maxClusterZoom) {
             delete this._currentClusters;
             this._markersToDraw = this.layer._geoList;
@@ -138,15 +144,15 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             this._computeGrid();
             this._clusterNeedRedraw = false;
         }
-        var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
+        const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
         this._markersToDraw = [];
-        var extent = map.getContainerExtent(),
-            clusters = [],
-            pt, pExt, sprite, width, height, font;
-        for (let p in zoomClusters) {
+        const extent = map.getContainerExtent(),
+            clusters = [];
+        let pt, pExt, sprite, width, height, font;
+        for (const p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
             if (zoomClusters[p]['count'] === 1) {
-                let marker = zoomClusters[p]['children'][0];
+                const marker = zoomClusters[p]['children'][0];
                 marker._cluster = zoomClusters[p];
                 this._markersToDraw.push(marker);
                 continue;
@@ -168,7 +174,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._drawLayer(clusters);
     }
 
-    _forEachGeo(fn, context) {
+    forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach((g) => {
                 if (context) {
@@ -214,17 +220,17 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     identify(point) {
-        var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        const map = this.getMap();
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }
-        var old = this._currentGrid;
-        for (var i = 0; i < this._currentClusters.length; i++) {
-            var c = this._currentClusters[i];
-            var pt = map._prjToContainerPoint(c['center']);
+        const old = this._currentGrid;
+        for (let i = 0; i < this._currentClusters.length; i++) {
+            const c = this._currentClusters[i];
+            const pt = map._prjToContainerPoint(c['center']);
             this._currentGrid = c;
-            var markerWidth = this._getSprite().canvas.width;
+            const markerWidth = this._getSprite().canvas.width;
 
             if (point.distanceTo(pt) <= markerWidth) {
                 return {
@@ -249,9 +255,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _refreshStyle() {
-        var symbol = this.layer.options['symbol'] || defaultSymbol;
-        var textSymbol = this.layer.options['textSymbol'] || defaultTextSymbol;
-        var argFn =  () => [this.getMap().getZoom(), this._currentGrid];
+        const symbol = this.layer.options['symbol'] || defaultSymbol;
+        const textSymbol = this.layer.options['textSymbol'] || defaultTextSymbol;
+        const argFn =  () => [this.getMap().getZoom(), this._currentGrid];
         this._symbol = maptalks.MapboxUtil.loadFunctionTypes(symbol, argFn);
         this._textSymbol = maptalks.MapboxUtil.loadFunctionTypes(textSymbol, argFn);
     }
@@ -294,13 +300,13 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     _drawClusters(clusters, ratio, matrix) {
         matrix = matrix ? matrix['container'] : null;
         this._clusterMaskExtent = this.prepareCanvas();
-        var map = this.getMap(),
+        const map = this.getMap(),
             drawn = {};
         // draw parent (for animation)
         if (this.layer.options['animation'] && ratio < 1) {
             clusters.forEach(c => {
                 if (c.parent) {
-                    var parent = map._prjToContainerPoint(c.parent['center']);
+                    let parent = map._prjToContainerPoint(c.parent['center']);
                     if (!drawn[c.parent.key]) {
                         if (matrix) {
                             parent = matrix.applyToPointInstance(parent);
@@ -315,9 +321,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             return;
         }
         clusters.forEach(c => {
-            var pt = map._prjToContainerPoint(c['center']);
+            let pt = map._prjToContainerPoint(c['center']);
             if (c.parent) {
-                var parent = map._prjToContainerPoint(c.parent['center']);
+                const parent = map._prjToContainerPoint(c.parent['center']);
                 pt = parent.add(pt.substract(parent)._multi(ratio));
             }
             if (matrix) {
@@ -330,15 +336,15 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     _drawCluster(pt, grid, op) {
         this._currentGrid = grid;
-        var ctx = this.context;
-        var sprite = this._getSprite();
-        var opacity = ctx.globalAlpha;
+        const ctx = this.context;
+        const sprite = this._getSprite();
+        const opacity = ctx.globalAlpha;
         if (opacity * op === 0) {
             return;
         }
         ctx.globalAlpha = opacity * op;
         if (sprite) {
-            var pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2);
+            const pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2);
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
@@ -354,7 +360,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         if (!this._spriteCache) {
             this._spriteCache = {};
         }
-        var key = maptalks.Util.getSymbolStamp(this._symbol);
+        const key = maptalks.Util.getSymbolStamp(this._symbol);
         if (!this._spriteCache[key]) {
             this._spriteCache[key] = new maptalks.Marker([0, 0], { 'symbol' : this._symbol })._getSprite(this.resources, this.getMap().CanvasClass);
         }
@@ -362,8 +368,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _initGridSystem() {
-        var extent, points = [];
-        var c;
+        const points = [];
+        let extent, c;
         this.layer.forEach(g => {
             c = g._getPrjCoordinates();
             if (!extent) {
@@ -383,7 +389,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _computeGrid() {
-        var map = this.getMap(),
+        const map = this.getMap(),
             zoom = map.getZoom();
         if (!this._markerExtent) {
             this._initGridSystem();
@@ -391,7 +397,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         if (!this._clusterCache) {
             this._clusterCache = {};
         }
-        var pre = map._getResolution(map.getMinZoom()) > map._getResolution(map.getMaxZoom()) ? zoom - 1 : zoom + 1;
+        const pre = map._getResolution(map.getMinZoom()) > map._getResolution(map.getMaxZoom()) ? zoom - 1 : zoom + 1;
         if (this._clusterCache[pre] && this._clusterCache[pre].length === this.layer.getCount()) {
             this._clusterCache[zoom] = this._clusterCache[pre];
         }
@@ -404,22 +410,22 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         if (!this._markerExtent) {
             return null;
         }
-        var map = this.getMap(),
+        const map = this.getMap(),
             r = map._getResolution(zoom) * this.layer.options['maxClusterRadius'],
-            preCache = this._clusterCache[zoom - 1],
             preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this.layer.options['maxClusterRadius'] : null;
+        let preCache = this._clusterCache[zoom - 1];
         if (!preCache && zoom - 1 >= map.getMinZoom()) {
             this._clusterCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
         }
         // 1. format extent of markers to grids with raidus of r
         // 2. find point's grid in the grids
         // 3. sum up the point into the grid's collection
-        var points = this._markerPoints;
-        var grids = {},
-            min = this._markerExtent.getMin(),
-            gx, gy, key,
+        const points = this._markerPoints;
+        const grids = {},
+            min = this._markerExtent.getMin();
+        let gx, gy, key,
             pgx, pgy, pkey;
-        for (var i = 0, len = points.length; i < len; i++) {
+        for (let i = 0, len = points.length; i < len; i++) {
             gx = Math.floor((points[i].x - min.x) / r);
             gy = Math.floor((points[i].y - min.y) / r);
             key = gx + '_' + gy;
@@ -448,33 +454,32 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _mergeClusters(grids, r) {
-        var clusterMap = {};
-        var p;
-        for (p in grids) {
+        const clusterMap = {};
+        for (const p in grids) {
             clusterMap[p] = grids[p];
         }
 
         // merge adjacent clusters
-        var merging = {};
+        const merging = {};
 
-        var visited = {};
+        const visited = {};
         // find clusters need to merge
-        var c1, c2;
-        for (p in grids) {
+        let c1, c2;
+        for (const p in grids) {
             c1 = grids[p];
             if (visited[c1.key]) {
                 continue;
             }
-            var gxgy = c1.key.split('_');
-            var gx = +(gxgy[0]),
+            const gxgy = c1.key.split('_');
+            const gx = +(gxgy[0]),
                 gy = +(gxgy[1]);
             //traverse adjacent grids
-            for (var ii = -1; ii <= 1; ii++) {
-                for (var iii = -1; iii <= 1; iii++) {
+            for (let ii = -1; ii <= 1; ii++) {
+                for (let iii = -1; iii <= 1; iii++) {
                     if (ii === 0 && iii === 0) {
                         continue;
                     }
-                    var key2 = (gx + ii) + '_' + (gy + iii);
+                    const key2 = (gx + ii) + '_' + (gy + iii);
                     c2 = grids[key2];
                     if (c2 && this._distanceTo(c1['center'], c2['center']) <= r) {
                         if (!merging[c1.key]) {
@@ -488,13 +493,13 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
 
         //merge clusters
-        for (var m in merging) {
-            var grid = grids[m];
+        for (const m in merging) {
+            const grid = grids[m];
             if (!grid) {
                 continue;
             }
-            var toMerge = merging[m];
-            for (var i = 0; i < toMerge.length; i++) {
+            const toMerge = merging[m];
+            for (let i = 0; i < toMerge.length; i++) {
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
@@ -513,7 +518,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _distanceTo(c1, c2) {
-        var x = c1.x - c2.x,
+        const x = c1.x - c2.x,
             y = c1.y - c2.y;
         return Math.sqrt(x * x + y * y);
     }

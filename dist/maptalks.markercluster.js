@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v2.0.3
+ * maptalks.markercluster v0.3.0
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
@@ -62,15 +62,6 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
         return layer;
     };
 
-    ClusterLayer.prototype.onConfig = function onConfig(conf) {
-        if (conf.hasOwnProperty('symbol')) {
-            if (this._getRenderer()) {
-                this._getRenderer().onSymbolChanged();
-            }
-        }
-        return _maptalks$VectorLayer.prototype.onConfig.call(this, conf);
-    };
-
     ClusterLayer.prototype.addMarker = function addMarker(markers) {
         return this.addGeometry(markers);
     };
@@ -84,8 +75,19 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
         return _maptalks$VectorLayer.prototype.addGeometry.apply(this, arguments);
     };
 
+    ClusterLayer.prototype.onConfig = function onConfig(conf) {
+        _maptalks$VectorLayer.prototype.onConfig.call(this, conf);
+        if (conf['maxClusterRadius'] || conf['symbol'] || conf['drawClusterText'] || conf['textSymbol'] || conf['maxClusterZoom']) {
+            var renderer$$1 = this._getRenderer();
+            if (renderer$$1) {
+                renderer$$1.render();
+            }
+        }
+        return this;
+    };
+
     /**
-     * Identify the clusters on the given container point
+     * Identify the clusters on the given coordinate
      * @param  {maptalks.Point} point   - 2d point
      * @return {Object}  result: { center : [cluster's center], children : [geometries in the cluster] }
      */
@@ -117,7 +119,7 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
 ClusterLayer.mergeOptions(options);
 
 // register ClusterLayer's JSON type for JSON deserialization.
-ClusterLayer.registerJSONType('ClusterLayaer');
+ClusterLayer.registerJSONType('ClusterLayer');
 
 var defaultTextSymbol = {
     'textFaceName': '"microsoft yahei"',
@@ -179,13 +181,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
         this._markersToDraw = [];
         var extent = map.getContainerExtent(),
-            clusters = [],
-            pt,
-            pExt,
-            sprite,
-            width,
-            height,
-            font;
+            clusters = [];
+        var pt = void 0,
+            pExt = void 0,
+            sprite = void 0,
+            width = void 0,
+            height = void 0,
+            font = void 0;
         for (var p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
             if (zoomClusters[p]['count'] === 1) {
@@ -211,7 +213,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         this._drawLayer(clusters);
     };
 
-    _class.prototype._forEachGeo = function _forEachGeo(fn, context) {
+    _class.prototype.forEachGeo = function forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach(function (g) {
                 if (context) {
@@ -258,7 +260,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype.identify = function identify(point) {
         var map = this.getMap();
-        point = map._pointToContainerPoint(point);
+        point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
         }
@@ -406,9 +408,9 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     };
 
     _class.prototype._initGridSystem = function _initGridSystem() {
-        var extent,
-            points = [];
-        var c;
+        var points = [];
+        var extent = void 0,
+            c = void 0;
         this.layer.forEach(function (g) {
             c = g._getPrjCoordinates();
             if (!extent) {
@@ -451,8 +453,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
         var map = this.getMap(),
             r = map._getResolution(zoom) * this.layer.options['maxClusterRadius'],
-            preCache = this._clusterCache[zoom - 1],
             preT = map._getResolution(zoom - 1) ? map._getResolution(zoom - 1) * this.layer.options['maxClusterRadius'] : null;
+        var preCache = this._clusterCache[zoom - 1];
         if (!preCache && zoom - 1 >= map.getMinZoom()) {
             this._clusterCache[zoom - 1] = preCache = this._computeZoomGrid(zoom - 1);
         }
@@ -461,13 +463,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         // 3. sum up the point into the grid's collection
         var points = this._markerPoints;
         var grids = {},
-            min = this._markerExtent.getMin(),
-            gx,
-            gy,
-            key,
-            pgx,
-            pgy,
-            pkey;
+            min = this._markerExtent.getMin();
+        var gx = void 0,
+            gy = void 0,
+            key = void 0,
+            pgx = void 0,
+            pgy = void 0,
+            pkey = void 0;
         for (var i = 0, len = points.length; i < len; i++) {
             gx = Math.floor((points[i].x - min.x) / r);
             gy = Math.floor((points[i].y - min.y) / r);
@@ -498,8 +500,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype._mergeClusters = function _mergeClusters(grids, r) {
         var clusterMap = {};
-        var p;
-        for (p in grids) {
+        for (var p in grids) {
             clusterMap[p] = grids[p];
         }
 
@@ -508,9 +509,10 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
         var visited = {};
         // find clusters need to merge
-        var c1, c2;
-        for (p in grids) {
-            c1 = grids[p];
+        var c1 = void 0,
+            c2 = void 0;
+        for (var _p in grids) {
+            c1 = grids[_p];
             if (visited[c1.key]) {
                 continue;
             }

@@ -113,7 +113,7 @@ describe('ClusterLayer', function () {
                 'markerFill'  : '#fff'
             });
         })
-         .addTo(map);
+        .addTo(map);
     });
 
     it('should be able to update marker\' symbol by style', function (done) {
@@ -134,6 +134,19 @@ describe('ClusterLayer', function () {
                 }
             ]);
         })
-         .addTo(map);
+        .addTo(map);
+    });
+
+    it('should be able to identify', function (done) {
+        var marker = new maptalks.Marker(map.getCenter());
+        var layer = new maptalks.ClusterLayer('g', [new maptalks.Marker(map.getCenter()), marker]);
+        layer.once('layerload', function () {
+            var hits = layer.identify(map.getCenter());
+            expect(hits).to.be.ok();
+            expect(hits.center).to.be.ok();
+            expect(hits.children.length === 2).to.be.ok();
+            done();
+        })
+        .addTo(map);
     });
 });
