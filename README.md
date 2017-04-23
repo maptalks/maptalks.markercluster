@@ -59,8 +59,8 @@ new maptalks.ClusterLayer(id, data, options)
 config layer's options and redraw the layer if necessary
 
 ```javascript
-heatLayer.config('maxClusterRadius', 100);
-heatLayer.config({
+clusterLayer.config('maxClusterRadius', 100);
+clusterLayer.config({
     'textSymbol' : {
         'textFaceName'      : 'monospace',
         'textSize'          : 16
