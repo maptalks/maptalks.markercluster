@@ -186,11 +186,11 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
     }
 
-    drawOnZooming() {
+    drawOnInteracting() {
         if (this._currentClusters) {
             this._drawClusters(this._currentClusters, 1);
         }
-        super.drawOnZooming.apply(this, arguments);
+        super.drawOnInteracting.apply(this, arguments);
     }
 
     onGeometryAdd() {
@@ -250,10 +250,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this.draw();
     }
 
-    isRenderOnZooming() {
-        return true;
-    }
-
     _refreshStyle() {
         const symbol = this.layer.options['symbol'] || defaultSymbol;
         const textSymbol = this.layer.options['textSymbol'] || defaultTextSymbol;
@@ -293,8 +289,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _drawMarkers() {
-        super._drawGeos(this._clusterMaskExtent);
-        this._isBlank = false;
+        super.drawGeos(this._clusterMaskExtent);
     }
 
     _drawClusters(clusters, ratio, matrix) {
