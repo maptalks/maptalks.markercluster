@@ -2317,9 +2317,9 @@ map-cache@^0.2.0:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/map-cache/-/map-cache-0.2.2.tgz#c32abd0bd6525d9b051645bb4f26ac5dc98a0dbf"
 
-maptalks-build-helpers@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/maptalks-build-helpers/-/maptalks-build-helpers-0.1.2.tgz#45fbd257a2b929e9347e105b48241cf866ae367c"
+maptalks-build-helpers@^0.2.0:
+  version "0.2.0"
+  resolved "http://registry.npm.taobao.org/maptalks-build-helpers/download/maptalks-build-helpers-0.2.0.tgz#922df7e8cc8d0d8f6e65a89a1deb00e98f006e25"
   dependencies:
     babel-plugin-transform-proto-to-assign "^6.9.0"
     karma "^1.3.0"
@@ -2331,9 +2331,9 @@ maptalks-build-helpers@^0.1.2:
     rollup-plugin-node-resolve "^2.0.0"
     uglify-js "^2.7.5"
 
-maptalks@<2.0.0:
-  version "0.22.1"
-  resolved "https://registry.yarnpkg.com/maptalks/-/maptalks-0.22.1.tgz#069b87fa5aa50f40757706d6c35391cb50f50424"
+maptalks@^0.23.0:
+  version "0.23.0"
+  resolved "http://registry.npm.taobao.org/maptalks/download/maptalks-0.23.0.tgz#6193817fdbe465411de030df06a7f62dee521706"
   dependencies:
     simplify-js "^1.2.1"
     zousan "^2.3.3"
