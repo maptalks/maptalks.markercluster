@@ -7,6 +7,10 @@ A plugin of [maptalks.js](https://github.com/maptalks/maptalks.js) to draw marke
 
 ![screenshot](https://cloud.githubusercontent.com/assets/13678919/25312742/3036acb0-2853-11e7-8e9b-baf58e318a9b.jpg)
 
+## Examples
+
+* marker clusters of [50000 points](https://maptalks.github.io/maptalks.markercluster/demo/). (data from [Leaflet.Heat](https://github.com/Leaflet/Leaflet.heat))
+
 ## Install
   
 * Install with npm: ```npm install maptalks.markercluster```. 
@@ -28,10 +32,6 @@ var clusterLayer = new maptalks.ClusterLayer('cluster', data).addTo(map);
 ## Supported Browsers
 
 IE 9-11, Chrome, Firefox, other modern and mobile browsers.
-
-## Examples
-
-* marker clusters of [50000 points](https://maptalks.github.io/maptalks.markercluster/demo/). (data from [Leaflet.Heat](https://github.com/Leaflet/Leaflet.heat))
 
 ## API Reference
 
