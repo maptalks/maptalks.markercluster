@@ -126,7 +126,9 @@ ClusterLayer.registerJSONType('ClusterLayer');
 
 var defaultTextSymbol = {
     'textFaceName': '"microsoft yahei"',
-    'textSize': 16
+    'textSize': 16,
+    'textDx': 0,
+    'textDy': 0
 };
 
 var defaultSymbol = {
@@ -155,11 +157,16 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     }
 
     _class.prototype.checkResources = function checkResources() {
+        var symbol = this.layer.options['symbol'] || defaultSymbol;
+        if (symbol === this._symbolResourceChecked) {
+            return [];
+        }
         var resources = _maptalks$renderer$Ve.prototype.checkResources.apply(this, arguments);
-        var res = maptalks.Util.getExternalResources(this.layer.options['symbol'] || defaultSymbol, true);
+        var res = maptalks.Util.getExternalResources(symbol, true);
         if (res) {
             resources.push.apply(resources, res);
         }
+        this._symbolResourceChecked = symbol;
         return resources;
     };
 
@@ -203,7 +210,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             width = sprite.canvas.width;
             height = sprite.canvas.height;
             pt = map._prjToContainerPoint(zoomClusters[p]['center']);
-            pExt = new maptalks.PointExtent(pt.substract(width, height), pt.add(width, height));
+            pExt = new maptalks.PointExtent(pt.subs(width, height), pt.add(width, height));
             if (!extent.intersects(pExt)) {
                 continue;
             }
@@ -237,17 +244,17 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype.onGeometryAdd = function onGeometryAdd() {
         this._clusterNeedRedraw = true;
-        this.render();
+        _maptalks$renderer$Ve.prototype.onGeometryAdd.apply(this, arguments);
     };
 
     _class.prototype.onGeometryRemove = function onGeometryRemove() {
         this._clusterNeedRedraw = true;
-        this.render();
+        _maptalks$renderer$Ve.prototype.onGeometryRemove.apply(this, arguments);
     };
 
     _class.prototype.onGeometryPositionChange = function onGeometryPositionChange() {
         this._clusterNeedRedraw = true;
-        this.render();
+        _maptalks$renderer$Ve.prototype.onGeometryPositionChange.apply(this, arguments);
     };
 
     _class.prototype.onRemove = function onRemove() {
@@ -318,11 +325,11 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     _this4.completeRender();
                 } else {
                     _this4._drawClusters(clusters, frame.styles.d);
-                    _this4.requestMapToRender();
+                    _this4.setCanvasUpdated();
                 }
             }).play();
             this._drawClusters(clusters, 0);
-            this.requestMapToRender();
+            this.setCanvasUpdated();
         } else {
             this._animated = false;
             this._drawClusters(clusters, 1);
@@ -364,7 +371,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             var pt = map._prjToContainerPoint(c['center']);
             if (c.parent) {
                 var parent = map._prjToContainerPoint(c.parent['center']);
-                pt = parent.add(pt.substract(parent)._multi(ratio));
+                pt = parent.add(pt.sub(parent)._multi(ratio));
             }
             if (matrix) {
                 pt = matrix.applyToPointInstance(pt);
@@ -383,13 +390,15 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
         ctx.globalAlpha = opacity * op;
         if (sprite) {
-            var pos = pt.add(sprite.offset)._substract(sprite.canvas.width / 2, sprite.canvas.height / 2);
+            var pos = pt.add(sprite.offset)._subs(sprite.canvas.width / 2, sprite.canvas.height / 2);
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
         if (this.layer.options['drawClusterText'] && grid['textSize']) {
             maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
-            maptalks.Canvas.fillText(ctx, grid['count'], pt.substract(grid['textSize']));
+            var dx = this._textSymbol['textDx'] || 0;
+            var dy = this._textSymbol['textDy'] || 0;
+            maptalks.Canvas.fillText(ctx, grid['count'], pt.sub(grid['textSize']).add(dx, dy));
         }
         ctx.globalAlpha = opacity;
     };
