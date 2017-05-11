@@ -254,7 +254,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._refreshStyle();
         this._computeGrid();
         this._stopAnim();
-        this.draw();
+        this.setToRedraw();
     }
 
     _refreshStyle() {
