@@ -1,10 +1,10 @@
 /*!
- * maptalks.markercluster v0.4.1
+ * maptalks.markercluster v0.5.0
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
 /*!
- * requires maptalks@^0.23.0 
+ * requires maptalks@^0.25.0 
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
@@ -210,7 +210,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             width = sprite.canvas.width;
             height = sprite.canvas.height;
             pt = map._prjToContainerPoint(zoomClusters[p]['center']);
-            pExt = new maptalks.PointExtent(pt.subs(width, height), pt.add(width, height));
+            pExt = new maptalks.PointExtent(pt.sub(width, height), pt.add(width, height));
             if (!extent.intersects(pExt)) {
                 continue;
             }
@@ -223,6 +223,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         this._drawLayer(clusters);
     };
 
+    _class.prototype.drawOnInteracting = function drawOnInteracting() {
+        if (this._currentClusters) {
+            this._drawClusters(this._currentClusters, 1);
+        }
+        _maptalks$renderer$Ve.prototype.drawOnInteracting.apply(this, arguments);
+    };
+
     _class.prototype.forEachGeo = function forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach(function (g) {
@@ -233,13 +240,6 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                 }
             });
         }
-    };
-
-    _class.prototype.drawOnInteracting = function drawOnInteracting() {
-        if (this._currentClusters) {
-            this._drawClusters(this._currentClusters, 1);
-        }
-        _maptalks$renderer$Ve.prototype.drawOnInteracting.apply(this, arguments);
     };
 
     _class.prototype.onGeometryAdd = function onGeometryAdd() {
@@ -259,13 +259,6 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype.onRemove = function onRemove() {
         this._clearDataCache();
-    };
-
-    _class.prototype.transform = function transform(matrix) {
-        if (this._currentClusters) {
-            this._drawClusters(this._currentClusters, 1, matrix);
-        }
-        return true;
     };
 
     _class.prototype.identify = function identify(point) {
@@ -296,7 +289,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         this._refreshStyle();
         this._computeGrid();
         this._stopAnim();
-        this.draw();
+        this.setToRedraw();
     };
 
     _class.prototype._refreshStyle = function _refreshStyle() {
@@ -390,7 +383,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
         ctx.globalAlpha = opacity * op;
         if (sprite) {
-            var pos = pt.add(sprite.offset)._subs(sprite.canvas.width / 2, sprite.canvas.height / 2);
+            var pos = pt.add(sprite.offset)._sub(sprite.canvas.width / 2, sprite.canvas.height / 2);
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
@@ -608,6 +601,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.4.1, requires maptalks@^0.23.0.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.5.0, requires maptalks@^0.25.0.');
 
 })));
