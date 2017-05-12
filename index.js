@@ -168,7 +168,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             width = sprite.canvas.width;
             height = sprite.canvas.height;
             pt = map._prjToContainerPoint(zoomClusters[p]['center']);
-            pExt = new maptalks.PointExtent(pt.subs(width, height), pt.add(width, height));
+            pExt = new maptalks.PointExtent(pt.sub(width, height), pt.add(width, height));
             if (!extent.intersects(pExt)) {
                 continue;
             }
@@ -181,6 +181,13 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._drawLayer(clusters);
     }
 
+    drawOnInteracting() {
+        if (this._currentClusters) {
+            this._drawClusters(this._currentClusters, 1);
+        }
+        super.drawOnInteracting.apply(this, arguments);
+    }
+
     forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach((g) => {
@@ -191,13 +198,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 }
             });
         }
-    }
-
-    drawOnInteracting() {
-        if (this._currentClusters) {
-            this._drawClusters(this._currentClusters, 1);
-        }
-        super.drawOnInteracting.apply(this, arguments);
     }
 
     onGeometryAdd() {
@@ -217,13 +217,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     onRemove() {
         this._clearDataCache();
-    }
-
-    transform(matrix) {
-        if (this._currentClusters) {
-            this._drawClusters(this._currentClusters, 1, matrix);
-        }
-        return true;
     }
 
     identify(point) {
@@ -346,7 +339,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
         ctx.globalAlpha = opacity * op;
         if (sprite) {
-            const pos = pt.add(sprite.offset)._subs(sprite.canvas.width / 2, sprite.canvas.height / 2);
+            const pos = pt.add(sprite.offset)._sub(sprite.canvas.width / 2, sprite.canvas.height / 2);
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
