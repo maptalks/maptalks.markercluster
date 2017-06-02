@@ -35,7 +35,7 @@ IE 9-11, Chrome, Firefox, other modern and mobile browsers.
 
 ## API Reference
 
-```ClusterLayer``` is a subclass of [maptalks.VectorLayer](http://docs.maptalks.org/api/maptalks.VectorLayer.html) and inherits all the methods of its parent.
+```ClusterLayer``` is a subclass of [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html) and inherits all the methods of its parent.
 
 ### `Constructor`
 
@@ -53,7 +53,7 @@ new maptalks.ClusterLayer(id, data, options)
     * maxClusterZoom **Number** the max zoom to draw as clusters (null by default)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
     * animationDuration **Number** the animation duration
-    * Other options defined in [maptalks.VectorLayer](http://docs.maptalks.org/api/maptalks.VectorLayer.html)
+    * Other options defined in [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html)
 
 ### `config(key, value)`
 
