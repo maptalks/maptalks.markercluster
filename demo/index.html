@@ -2,18 +2,22 @@
 <html>
 <head>
     <title>maptalks.markercluster demo</title>
-    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css">
-    <script type="text/javascript" src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>
+    <!--<link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.css">
+    <script type="text/javascript" src="https://unpkg.com/maptalks@<2.0.0/dist/maptalks.min.js"></script>-->
+    <link href="../node_modules/maptalks/dist/maptalks.css" rel="stylesheet" />
+    <script src="../node_modules/maptalks/dist/maptalks.js"></script>
     <script type="text/javascript" src="../dist/maptalks.markercluster.js"></script>
     <script type="text/javascript" src="realworld.50000.1.js"></script>
     <script type="text/javascript" src="realworld.50000.2.js"></script>
-    <style>
+    <style> 
         html,body{
             margin:0px;
+            height: 100%;
+            width: 100%;
         }
         #map {
-            width: 960px;
-            height:600px;
+            width: 100%;
+            height:100%;
         }
     </style>
 </head>
@@ -51,22 +55,18 @@
         'forceRenderOnZooming' : true,
         'maxClusterZoom' : 16,
         //"count" is an internal variable: marker count in the cluster.
-        'symbol' :{
-            'markerType' : 'ellipse',
-            'markerFill' : { property:'count', type:'interval', stops: [[0, 'rgb(135, 196, 240)'], [9, 'rgba(222, 125, 44, 1)'], [99, 'rgb(156, 38, 50)']] },
-            'markerFillOpacity' : 1,
-            'markerLineOpacity' : 1,
-            'markerLineWidth' : 3,
-            'markerLineColor' : '#fff',
-            'markerWidth'  : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] },
-            'markerHeight' : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] }
+        'symbol': {
+            'markerType': 'ellipse',
+            'markerFill': { property: 'count', type: 'interval', stops: [[0, '#00F5FF'], [9, '#98FB98'], [99, '#EEEE00'], [300, '#FF6EB4']] },
+            'markerFillOpacity': 0.9,
+            'markerLineOpacity': 0.3,
+            'markerLineWidth': 10,
+            'markerLineColor': { property: 'count', type: 'interval', stops: [[0, '#00F5FF'], [9, '#98FB98'], [99, '#EEEE00'], [300, '#FF6EB4']] },
+            'markerWidth': { property: 'count', type: 'interval', stops: [[0, 25], [9, 30], [99, 35], [500, 40]] },
+            'markerHeight': { property: 'count', type: 'interval', stops: [[0, 25], [9, 30], [99, 35], [500, 40]] }
         },
-        'textSymbol' : {
-            'textFaceName' : 'monospace',
-            'textSize'  : 20,
-            'textFill'  : '#fff'
-        },
-        'drawClusterText' : true
+        'drawClusterText': true,
+        'single': true
     });
 
     map.addLayer(clusterLayer);
