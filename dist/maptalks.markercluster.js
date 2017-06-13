@@ -28,7 +28,8 @@ var options = {
     'textSymbol': null,
     'animation': true,
     'animationDuration': 450,
-    'maxClusterZoom': null
+    'maxClusterZoom': null,
+    'single': true
 };
 
 var ClusterLayer = function (_maptalks$VectorLayer) {
@@ -114,6 +115,19 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
         json['type'] = 'ClusterLayer';
         return json;
     };
+    /**
+     * Get the ClusterLayer's current clusters
+     * @return {Object} layer's clusters
+     **/
+
+
+    ClusterLayer.prototype.getClusters = function getClusters() {
+        var renderer$$1 = this._getRenderer();
+        if (renderer$$1) {
+            return renderer$$1._currentClusters || [];
+        }
+        return [];
+    };
 
     return ClusterLayer;
 }(maptalks.VectorLayer);
@@ -126,7 +140,7 @@ ClusterLayer.registerJSONType('ClusterLayer');
 
 var defaultTextSymbol = {
     'textFaceName': '"microsoft yahei"',
-    'textSize': 16,
+    'textSize': 12,
     'textDx': 0,
     'textDy': 0
 };
@@ -200,7 +214,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             font = void 0;
         for (var p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
-            if (zoomClusters[p]['count'] === 1) {
+            if (zoomClusters[p]['count'] === 1 && this.layer.options['single']) {
                 var marker = zoomClusters[p]['children'][0];
                 marker._cluster = zoomClusters[p];
                 this._markersToDraw.push(marker);
@@ -307,11 +321,20 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._drawLayer = function _drawLayer(clusters) {
         var _this4 = this;
 
-        this._currentClusters = clusters;
+        //this._currentClusters = clusters;
+        this._currentClusters = this.layer._currentClusters = clusters;
         delete this._clusterMaskExtent;
         var layer = this.layer;
-        if (layer.options['animation'] && this._animated && this._inout === 'out') {
-            this._player = maptalks.animation.Animation.animate({ 'd': [0, 1] }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
+        var dr = [0, 1];
+        //if (layer.options['animation'] && this._animated && this._inout === 'out') {
+        if (layer.options['animation'] && this._animated && this._inout) {
+            if (this._inout === 'in') {
+                dr = [1, 0];
+                clusters = this._zoomInClusters;
+            } else if (this._inout === 'out') {
+                dr = [0, 1];
+            }
+            this._player = maptalks.animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
                 if (frame.state.playState === 'finished') {
                     _this4._animated = false;
                     _this4._drawMarkers();
@@ -321,7 +344,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     _this4.setCanvasUpdated();
                 }
             }).play();
-            this._drawClusters(clusters, 0);
+            this._drawClusters(clusters, dr[0]);
             this.setCanvasUpdated();
         } else {
             this._animated = false;
@@ -582,8 +605,19 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     };
 
     _class.prototype.onZoomEnd = function onZoomEnd() {
+        var zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
+        if (this._inout === 'in') {
+            if (!this._clusterCache[zoom + 1]) {
+                this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
+            }
+            var tempCluster = this._clusterCache[zoom + 1].clusters;
+            this._zoomInClusters = [];
+            for (var p in tempCluster) {
+                this._zoomInClusters.push(tempCluster[p]);
+            }
+        }
         _maptalks$renderer$Ve.prototype.onZoomEnd.apply(this, arguments);
     };
 
