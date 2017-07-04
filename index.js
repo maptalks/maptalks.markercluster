@@ -2,14 +2,14 @@ import * as maptalks from 'maptalks';
 
 const options = {
     'maxClusterRadius' : 160,
-    'geometryEvents' : false,
     'symbol' : null,
     'drawClusterText' : true,
     'textSymbol' : null,
     'animation' : true,
     'animationDuration' : 450,
     'maxClusterZoom' : null,
-    'single':true
+    'noClusterWithOneMarker':true,
+    'forceRenderOnZooming' : true
 };
 
 export class ClusterLayer extends maptalks.VectorLayer {
@@ -66,12 +66,17 @@ export class ClusterLayer extends maptalks.VectorLayer {
 
     /**
      * Identify the clusters on the given coordinate
-     * @param  {maptalks.Point} point   - 2d point
-     * @return {Object}  result: { center : [cluster's center], children : [geometries in the cluster] }
+     * @param  {maptalks.Coordinate} coordinate   - coordinate to identify
+     * @return {Object|Geometry[]}  result: cluster { center : [cluster's center], children : [geometries in the cluster] } or markers
      */
-    identify(point, options) {
+    identify(coordinate, options) {
+        const map = this.getMap(),
+            maxZoom = this.options['maxClusterZoom'];
+        if (maxZoom && map && map.getZoom() > maxZoom) {
+            return super.identify(coordinate, options);
+        }
         if (this._getRenderer()) {
-            return this._getRenderer().identify(point, options);
+            return this._getRenderer().identify(coordinate, options);
         }
         return null;
     }
@@ -106,7 +111,7 @@ ClusterLayer.registerJSONType('ClusterLayer');
 
 const defaultTextSymbol = {
     'textFaceName'      : '"microsoft yahei"',
-    'textSize'          : 12,
+    'textSize'          : 16,
     'textDx'            : 0,
     'textDy'            : 0
 };
@@ -170,7 +175,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         let pt, pExt, sprite, width, height, font;
         for (const p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
-            if (zoomClusters[p]['count'] === 1 && this.layer.options['single']) {
+            if (zoomClusters[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
                 const marker = zoomClusters[p]['children'][0];
                 marker._cluster = zoomClusters[p];
                 this._markersToDraw.push(marker);
@@ -231,8 +236,12 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._clearDataCache();
     }
 
-    identify(point) {
-        const map = this.getMap();
+    identify(point, options) {
+        const map = this.getMap(),
+            maxZoom = this.layer.options['maxClusterZoom'];
+        if (maxZoom && map.getZoom() > maxZoom) {
+            return super.identify(point, options);
+        }
         point = map.coordinateToContainerPoint(point);
         if (!this._currentClusters) {
             return null;
@@ -271,8 +280,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _drawLayer(clusters) {
-        //this._currentClusters = clusters;
-        this._currentClusters = this.layer._currentClusters = clusters;
+        this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         const layer = this.layer;
         let dr = [0, 1];
@@ -290,6 +298,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 frame => {
                     if (frame.state.playState === 'finished') {
                         this._animated = false;
+                        this._drawClusters(clusters, dr[1]);
                         this._drawMarkers();
                         this.completeRender();
                     } else {
@@ -543,7 +552,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     _stopAnim() {
         if (this._player && this._player.playState !== 'finished') {
-            this._player.cancel();
+            this._player.finish();
         }
     }
 
@@ -575,5 +584,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         delete this._markerExtent;
         delete this._markerPoints;
         delete this._clusterCache;
+        delete this._zoomInClusters;
     }
 });
