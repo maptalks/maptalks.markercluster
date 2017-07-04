@@ -323,6 +323,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _drawClusters(clusters, ratio, matrix) {
+        if (!clusters) {
+            return;
+        }
         matrix = matrix ? matrix['container'] : null;
         this._clusterMaskExtent = this.prepareCanvas();
         const map = this.getMap(),
