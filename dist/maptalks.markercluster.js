@@ -1,10 +1,10 @@
 /*!
- * maptalks.markercluster v0.5.0
+ * maptalks.markercluster v0.6.0
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
 /*!
- * requires maptalks@^0.25.0 
+ * requires maptalks@^0.26.3 
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
@@ -22,14 +22,14 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var options = {
     'maxClusterRadius': 160,
-    'geometryEvents': false,
     'symbol': null,
     'drawClusterText': true,
     'textSymbol': null,
     'animation': true,
     'animationDuration': 450,
     'maxClusterZoom': null,
-    'single': true
+    'noClusterWithOneMarker': true,
+    'forceRenderOnZooming': true
 };
 
 var ClusterLayer = function (_maptalks$VectorLayer) {
@@ -92,14 +92,19 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
 
     /**
      * Identify the clusters on the given coordinate
-     * @param  {maptalks.Point} point   - 2d point
-     * @return {Object}  result: { center : [cluster's center], children : [geometries in the cluster] }
+     * @param  {maptalks.Coordinate} coordinate   - coordinate to identify
+     * @return {Object|Geometry[]}  result: cluster { center : [cluster's center], children : [geometries in the cluster] } or markers
      */
 
 
-    ClusterLayer.prototype.identify = function identify(point, options) {
+    ClusterLayer.prototype.identify = function identify(coordinate, options) {
+        var map = this.getMap(),
+            maxZoom = this.options['maxClusterZoom'];
+        if (maxZoom && map && map.getZoom() > maxZoom) {
+            return _maptalks$VectorLayer.prototype.identify.call(this, coordinate, options);
+        }
         if (this._getRenderer()) {
-            return this._getRenderer().identify(point, options);
+            return this._getRenderer().identify(coordinate, options);
         }
         return null;
     };
@@ -140,7 +145,7 @@ ClusterLayer.registerJSONType('ClusterLayer');
 
 var defaultTextSymbol = {
     'textFaceName': '"microsoft yahei"',
-    'textSize': 12,
+    'textSize': 16,
     'textDx': 0,
     'textDy': 0
 };
@@ -214,7 +219,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             font = void 0;
         for (var p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
-            if (zoomClusters[p]['count'] === 1 && this.layer.options['single']) {
+            if (zoomClusters[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
                 var marker = zoomClusters[p]['children'][0];
                 marker._cluster = zoomClusters[p];
                 this._markersToDraw.push(marker);
@@ -275,27 +280,35 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         this._clearDataCache();
     };
 
-    _class.prototype.identify = function identify(point) {
-        var map = this.getMap();
-        point = map.coordinateToContainerPoint(point);
-        if (!this._currentClusters) {
-            return null;
+    _class.prototype.identify = function identify(coordinate, options) {
+        var map = this.getMap(),
+            maxZoom = this.layer.options['maxClusterZoom'];
+        if (maxZoom && map.getZoom() > maxZoom) {
+            return _maptalks$renderer$Ve.prototype.identify.call(this, coordinate, options);
         }
-        var old = this._currentGrid;
-        for (var i = 0; i < this._currentClusters.length; i++) {
-            var c = this._currentClusters[i];
-            var pt = map._prjToContainerPoint(c['center']);
-            this._currentGrid = c;
-            var markerWidth = this._getSprite().canvas.width;
+        if (this._currentClusters) {
+            var point = map.coordinateToContainerPoint(coordinate);
+            var old = this._currentGrid;
+            for (var i = 0; i < this._currentClusters.length; i++) {
+                var c = this._currentClusters[i];
+                var pt = map._prjToContainerPoint(c['center']);
+                this._currentGrid = c;
+                var markerWidth = this._getSprite().canvas.width;
 
-            if (point.distanceTo(pt) <= markerWidth) {
-                return {
-                    'center': map.getProjection().unproject(c.center.copy()),
-                    'children': c.children.slice(0)
-                };
+                if (point.distanceTo(pt) <= markerWidth) {
+                    return {
+                        'center': map.getProjection().unproject(c.center.copy()),
+                        'children': c.children.slice(0)
+                    };
+                }
             }
+            this._currentGrid = old;
         }
-        this._currentGrid = old;
+
+        // if no clusters is hit, identify markers
+        if (this._markersToDraw) {
+            return this.layer._hitGeos(this._markersToDraw, coordinate, options);
+        }
         return null;
     };
 
@@ -321,8 +334,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._drawLayer = function _drawLayer(clusters) {
         var _this4 = this;
 
-        //this._currentClusters = clusters;
-        this._currentClusters = this.layer._currentClusters = clusters;
+        this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         var layer = this.layer;
         var dr = [0, 1];
@@ -337,6 +349,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             this._player = maptalks.animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
                 if (frame.state.playState === 'finished') {
                     _this4._animated = false;
+                    _this4._drawClusters(clusters, dr[1]);
                     _this4._drawMarkers();
                     _this4.completeRender();
                 } else {
@@ -361,6 +374,9 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._drawClusters = function _drawClusters(clusters, ratio, matrix) {
         var _this5 = this;
 
+        if (!clusters) {
+            return;
+        }
         matrix = matrix ? matrix['container'] : null;
         this._clusterMaskExtent = this.prepareCanvas();
         var map = this.getMap(),
@@ -594,7 +610,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype._stopAnim = function _stopAnim() {
         if (this._player && this._player.playState !== 'finished') {
-            this._player.cancel();
+            this._player.finish();
         }
     };
 
@@ -615,6 +631,9 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             var tempCluster = this._clusterCache[zoom + 1].clusters;
             this._zoomInClusters = [];
             for (var p in tempCluster) {
+                if (tempCluster[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
+                    continue;
+                }
                 this._zoomInClusters.push(tempCluster[p]);
             }
         }
@@ -626,6 +645,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         delete this._markerExtent;
         delete this._markerPoints;
         delete this._clusterCache;
+        delete this._zoomInClusters;
     };
 
     return _class;
@@ -635,6 +655,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.5.0, requires maptalks@^0.25.0.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.6.0, requires maptalks@^0.26.3.');
 
 })));
