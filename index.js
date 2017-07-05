@@ -236,31 +236,35 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._clearDataCache();
     }
 
-    identify(point, options) {
+    identify(coordinate, options) {
         const map = this.getMap(),
             maxZoom = this.layer.options['maxClusterZoom'];
         if (maxZoom && map.getZoom() > maxZoom) {
-            return super.identify(point, options);
+            return super.identify(coordinate, options);
         }
-        point = map.coordinateToContainerPoint(point);
-        if (!this._currentClusters) {
-            return null;
-        }
-        const old = this._currentGrid;
-        for (let i = 0; i < this._currentClusters.length; i++) {
-            const c = this._currentClusters[i];
-            const pt = map._prjToContainerPoint(c['center']);
-            this._currentGrid = c;
-            const markerWidth = this._getSprite().canvas.width;
+        if (this._currentClusters) {
+            const point = map.coordinateToContainerPoint(coordinate);
+            const old = this._currentGrid;
+            for (let i = 0; i < this._currentClusters.length; i++) {
+                const c = this._currentClusters[i];
+                const pt = map._prjToContainerPoint(c['center']);
+                this._currentGrid = c;
+                const markerWidth = this._getSprite().canvas.width;
 
-            if (point.distanceTo(pt) <= markerWidth) {
-                return {
-                    'center'   : map.getProjection().unproject(c.center.copy()),
-                    'children' : c.children.slice(0)
-                };
+                if (point.distanceTo(pt) <= markerWidth) {
+                    return {
+                        'center'   : map.getProjection().unproject(c.center.copy()),
+                        'children' : c.children.slice(0)
+                    };
+                }
             }
+            this._currentGrid = old;
         }
-        this._currentGrid = old;
+
+        // if no clusters is hit, identify markers
+        if (this._markersToDraw) {
+            return this.layer._hitGeos(this._markersToDraw, coordinate, options);
+        }
         return null;
     }
 
@@ -576,6 +580,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             const tempCluster = this._clusterCache[zoom + 1].clusters;
             this._zoomInClusters = [];
             for (const p in tempCluster) {
+                if (tempCluster[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
+                    continue;
+                }
                 this._zoomInClusters.push(tempCluster[p]);
             }
         }
