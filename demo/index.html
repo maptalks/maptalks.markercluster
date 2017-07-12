@@ -51,8 +51,8 @@
     }
 
     var clusterLayer = new maptalks.ClusterLayer('cluster', markers, {
-        // 'forceRenderOnZooming' : true,
-        'maxClusterZoom' : 16,
+        'noClusterWithOneMarker' : false,
+        'maxClusterZoom' : 18,
         //"count" is an internal variable: marker count in the cluster.
         'symbol': {
             'markerType' : 'ellipse',
