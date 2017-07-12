@@ -169,10 +169,20 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             this._clusterNeedRedraw = false;
         }
         const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
+
         this._markersToDraw = [];
+
+        const clusters = this._getClustersToDraw(zoomClusters);
+        this._drawLayer(clusters);
+    }
+
+    _getClustersToDraw(zoomClusters) {
+        const map = this.getMap();
+        const font = maptalks.StringUtil.getFont(this._textSymbol),
+            digitLen = maptalks.StringUtil.stringLength('9', font).toPoint();
         const extent = map.getContainerExtent(),
             clusters = [];
-        let pt, pExt, sprite, width, height, font;
+        let pt, pExt, sprite, width, height;
         for (const p in zoomClusters) {
             this._currentGrid = zoomClusters[p];
             if (zoomClusters[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
@@ -189,13 +199,13 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             if (!extent.intersects(pExt)) {
                 continue;
             }
-            font = maptalks.StringUtil.getFont(this._textSymbol);
+
             if (!zoomClusters[p]['textSize']) {
-                zoomClusters[p]['textSize'] = maptalks.StringUtil.stringLength(zoomClusters[p]['count'], font).toPoint()._multi(1 / 2);
+                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * (zoomClusters[p]['count'] + '').length, digitLen.y)._multi(1 / 2);
             }
             clusters.push(zoomClusters[p]);
         }
-        this._drawLayer(clusters);
+        return clusters;
     }
 
     drawOnInteracting() {
@@ -302,7 +312,11 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 frame => {
                     if (frame.state.playState === 'finished') {
                         this._animated = false;
-                        this._drawClusters(clusters, dr[1]);
+                        if (this._inout === 'in') {
+                            this._drawClusters(this._currentClusters, dr[0]);
+                        } else {
+                            this._drawClusters(clusters, dr[1]);
+                        }
                         this._drawMarkers();
                         this.completeRender();
                     } else {
@@ -578,13 +592,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
             }
             const tempCluster = this._clusterCache[zoom + 1].clusters;
-            this._zoomInClusters = [];
-            for (const p in tempCluster) {
-                if (tempCluster[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
-                    continue;
-                }
-                this._zoomInClusters.push(tempCluster[p]);
-            }
+            this._zoomInClusters = this._getClustersToDraw(tempCluster);
         }
         super.onZoomEnd.apply(this, arguments);
     }
