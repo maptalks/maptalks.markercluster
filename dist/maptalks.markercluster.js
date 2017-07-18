@@ -355,22 +355,26 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             } else if (this._inout === 'out') {
                 dr = [0, 1];
             }
-            this._player = maptalks.animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
-                if (frame.state.playState === 'finished') {
-                    _this4._animated = false;
-                    if (_this4._inout === 'in') {
-                        _this4._drawClusters(_this4._currentClusters, dr[0]);
+            if (clusters) {
+                this._player = maptalks.animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
+                    if (frame.state.playState === 'finished') {
+                        _this4._animated = false;
+                        if (_this4._inout === 'in') {
+                            _this4._drawClusters(_this4._currentClusters, dr[0]);
+                        } else {
+                            _this4._drawClusters(clusters, dr[1]);
+                        }
+                        _this4._drawMarkers();
+                        _this4.completeRender();
                     } else {
-                        _this4._drawClusters(clusters, dr[1]);
+                        _this4._drawClusters(clusters, frame.styles.d);
+                        _this4.setCanvasUpdated();
                     }
-                    _this4._drawMarkers();
-                    _this4.completeRender();
-                } else {
-                    _this4._drawClusters(clusters, frame.styles.d);
-                    _this4.setCanvasUpdated();
-                }
-            }).play();
-            this._drawClusters(clusters, dr[0]);
+                }).play();
+                this._drawClusters(clusters, dr[0]);
+            } else {
+                this._drawClusters(this._currentClusters, 1);
+            }
             this.setCanvasUpdated();
         } else {
             this._animated = false;
@@ -634,15 +638,23 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     };
 
     _class.prototype.onZoomEnd = function onZoomEnd() {
+        if (this.layer.isEmpty() || !this.layer.isVisible()) {
+            _maptalks$renderer$Ve.prototype.onZoomEnd.apply(this, arguments);
+            return;
+        }
         var zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
-        if (this._inout === 'in') {
+        if (this._inout === 'in' && this.layer.options['animation']) {
             if (!this._clusterCache[zoom + 1]) {
                 this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
             }
-            var tempCluster = this._clusterCache[zoom + 1].clusters;
-            this._zoomInClusters = this._getClustersToDraw(tempCluster);
+            if (this._clusterCache[zoom + 1]) {
+                var tempCluster = this._clusterCache[zoom + 1].clusters;
+                this._zoomInClusters = this._getClustersToDraw(tempCluster);
+            } else {
+                this._zoomInClusters = null;
+            }
         }
         _maptalks$renderer$Ve.prototype.onZoomEnd.apply(this, arguments);
     };

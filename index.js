@@ -306,27 +306,31 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             } else if (this._inout === 'out') {
                 dr = [0, 1];
             }
-            this._player = maptalks.animation.Animation.animate(
-                { 'd' : dr },
-                { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
-                frame => {
-                    if (frame.state.playState === 'finished') {
-                        this._animated = false;
-                        if (this._inout === 'in') {
-                            this._drawClusters(this._currentClusters, dr[0]);
+            if (clusters) {
+                this._player = maptalks.animation.Animation.animate(
+                    { 'd' : dr },
+                    { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
+                    frame => {
+                        if (frame.state.playState === 'finished') {
+                            this._animated = false;
+                            if (this._inout === 'in') {
+                                this._drawClusters(this._currentClusters, dr[0]);
+                            } else {
+                                this._drawClusters(clusters, dr[1]);
+                            }
+                            this._drawMarkers();
+                            this.completeRender();
                         } else {
-                            this._drawClusters(clusters, dr[1]);
+                            this._drawClusters(clusters, frame.styles.d);
+                            this.setCanvasUpdated();
                         }
-                        this._drawMarkers();
-                        this.completeRender();
-                    } else {
-                        this._drawClusters(clusters, frame.styles.d);
-                        this.setCanvasUpdated();
                     }
-                }
-            )
-            .play();
-            this._drawClusters(clusters, dr[0]);
+                )
+                .play();
+                this._drawClusters(clusters, dr[0]);
+            } else {
+                this._drawClusters(this._currentClusters, 1);
+            }
             this.setCanvasUpdated();
         } else {
             this._animated = false;
@@ -584,15 +588,23 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     onZoomEnd() {
+        if (this.layer.isEmpty() || !this.layer.isVisible()) {
+            super.onZoomEnd.apply(this, arguments);
+            return;
+        }
         const zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
-        if (this._inout === 'in') {
+        if (this._inout === 'in' && this.layer.options['animation']) {
             if (!this._clusterCache[zoom + 1]) {
                 this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
             }
-            const tempCluster = this._clusterCache[zoom + 1].clusters;
-            this._zoomInClusters = this._getClustersToDraw(tempCluster);
+            if (this._clusterCache[zoom + 1]) {
+                const tempCluster = this._clusterCache[zoom + 1].clusters;
+                this._zoomInClusters = this._getClustersToDraw(tempCluster);
+            } else {
+                this._zoomInClusters = null;
+            }
         }
         super.onZoomEnd.apply(this, arguments);
     }
