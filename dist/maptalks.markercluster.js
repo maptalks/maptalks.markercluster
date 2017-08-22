@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.6.2
+ * maptalks.markercluster v0.6.3-beta
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
@@ -177,15 +177,14 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype.checkResources = function checkResources() {
         var symbol = this.layer.options['symbol'] || defaultSymbol;
-        if (symbol === this._symbolResourceChecked) {
-            return [];
-        }
         var resources = _maptalks$renderer$Ve.prototype.checkResources.apply(this, arguments);
-        var res = maptalks.Util.getExternalResources(symbol, true);
-        if (res) {
-            resources.push.apply(resources, res);
+        if (symbol !== this._symbolResourceChecked) {
+            var res = maptalks.Util.getExternalResources(symbol, true);
+            if (res) {
+                resources.push.apply(resources, res);
+            }
+            this._symbolResourceChecked = symbol;
         }
-        this._symbolResourceChecked = symbol;
         return resources;
     };
 
@@ -209,13 +208,12 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
         var zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
 
-        this._markersToDraw = [];
-
         var clusters = this._getClustersToDraw(zoomClusters);
         this._drawLayer(clusters);
     };
 
     _class.prototype._getClustersToDraw = function _getClustersToDraw(zoomClusters) {
+        this._markersToDraw = [];
         var map = this.getMap();
         var font = maptalks.StringUtil.getFont(this._textSymbol),
             digitLen = maptalks.StringUtil.stringLength('9', font).toPoint();
@@ -632,25 +630,26 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     };
 
     _class.prototype.onZoomStart = function onZoomStart(param) {
-        this._inout = param['from'] > param['to'] ? 'in' : 'out';
         this._stopAnim();
         _maptalks$renderer$Ve.prototype.onZoomStart.call(this, param);
     };
 
-    _class.prototype.onZoomEnd = function onZoomEnd() {
+    _class.prototype.onZoomEnd = function onZoomEnd(param) {
         if (this.layer.isEmpty() || !this.layer.isVisible()) {
             _maptalks$renderer$Ve.prototype.onZoomEnd.apply(this, arguments);
             return;
         }
-        var zoom = this.getMap().getZoom();
+        this._inout = param['from'] > param['to'] ? 'in' : 'out';
+        var fromZoom = param['from'];
+        // const zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
         if (this._inout === 'in' && this.layer.options['animation']) {
-            if (!this._clusterCache[zoom + 1]) {
-                this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
+            if (!this._clusterCache[fromZoom]) {
+                this._clusterCache[fromZoom] = this._computeZoomGrid(fromZoom);
             }
-            if (this._clusterCache[zoom + 1]) {
-                var tempCluster = this._clusterCache[zoom + 1].clusters;
+            if (this._clusterCache[fromZoom]) {
+                var tempCluster = this._clusterCache[fromZoom].clusters;
                 this._zoomInClusters = this._getClustersToDraw(tempCluster);
             } else {
                 this._zoomInClusters = null;
@@ -674,6 +673,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.6.2, requires maptalks@^0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.6.3-beta, requires maptalks@^0.26.3.');
 
 })));

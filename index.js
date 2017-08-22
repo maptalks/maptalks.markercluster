@@ -138,15 +138,14 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     checkResources() {
         const symbol = this.layer.options['symbol'] || defaultSymbol;
-        if (symbol === this._symbolResourceChecked) {
-            return [];
-        }
         const resources = super.checkResources.apply(this, arguments);
-        const res = maptalks.Util.getExternalResources(symbol, true);
-        if (res) {
-            resources.push.apply(resources, res);
+        if (symbol !== this._symbolResourceChecked) {
+            const res = maptalks.Util.getExternalResources(symbol, true);
+            if (res) {
+                resources.push.apply(resources, res);
+            }
+            this._symbolResourceChecked = symbol;
         }
-        this._symbolResourceChecked = symbol;
         return resources;
     }
 
@@ -170,13 +169,12 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
         const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
 
-        this._markersToDraw = [];
-
         const clusters = this._getClustersToDraw(zoomClusters);
         this._drawLayer(clusters);
     }
 
     _getClustersToDraw(zoomClusters) {
+        this._markersToDraw = [];
         const map = this.getMap();
         const font = maptalks.StringUtil.getFont(this._textSymbol),
             digitLen = maptalks.StringUtil.stringLength('9', font).toPoint();
@@ -582,25 +580,26 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     onZoomStart(param) {
-        this._inout = param['from'] > param['to'] ? 'in' : 'out';
         this._stopAnim();
         super.onZoomStart(param);
     }
 
-    onZoomEnd() {
+    onZoomEnd(param) {
         if (this.layer.isEmpty() || !this.layer.isVisible()) {
             super.onZoomEnd.apply(this, arguments);
             return;
         }
-        const zoom = this.getMap().getZoom();
+        this._inout = param['from'] > param['to'] ? 'in' : 'out';
+        const fromZoom = param['from'];
+        // const zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
         if (this._inout === 'in' && this.layer.options['animation']) {
-            if (!this._clusterCache[zoom + 1]) {
-                this._clusterCache[zoom + 1] = this._computeZoomGrid(zoom + 1);
+            if (!this._clusterCache[fromZoom]) {
+                this._clusterCache[fromZoom] = this._computeZoomGrid(fromZoom);
             }
-            if (this._clusterCache[zoom + 1]) {
-                const tempCluster = this._clusterCache[zoom + 1].clusters;
+            if (this._clusterCache[fromZoom]) {
+                const tempCluster = this._clusterCache[fromZoom].clusters;
                 this._zoomInClusters = this._getClustersToDraw(tempCluster);
             } else {
                 this._zoomInClusters = null;
