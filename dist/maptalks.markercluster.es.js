@@ -6,11 +6,7 @@
 /*!
  * requires maptalks@^0.26.3 
  */
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'maptalks'], factory) :
-	(factory((global.maptalks = global.maptalks || {}),global.maptalks));
-}(this, (function (exports,maptalks) { 'use strict';
+import { Canvas, Coordinate, Geometry, MapboxUtil, Marker, Point, PointExtent, StringUtil, Util, VectorLayer, animation, renderer } from 'maptalks';
 
 function _defaults(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
 
@@ -57,7 +53,7 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
         var geoJSONs = json['geometries'];
         var geometries = [];
         for (var i = 0; i < geoJSONs.length; i++) {
-            var geo = maptalks.Geometry.fromJSON(geoJSONs[i]);
+            var geo = Geometry.fromJSON(geoJSONs[i]);
             if (geo) {
                 geometries.push(geo);
             }
@@ -72,7 +68,7 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
 
     ClusterLayer.prototype.addGeometry = function addGeometry(markers) {
         for (var i = 0, len = markers.length; i <= len; i++) {
-            if (!markers[i] instanceof maptalks.Marker) {
+            if (!markers[i] instanceof Marker) {
                 throw new Error('Only a point(Marker) can be added into a ClusterLayer');
             }
         }
@@ -135,7 +131,7 @@ var ClusterLayer = function (_maptalks$VectorLayer) {
     };
 
     return ClusterLayer;
-}(maptalks.VectorLayer);
+}(VectorLayer);
 
 // merge to define ClusterLayer's default options.
 ClusterLayer.mergeOptions(options);
@@ -179,7 +175,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         var symbol = this.layer.options['symbol'] || defaultSymbol;
         var resources = _maptalks$renderer$Ve.prototype.checkResources.apply(this, arguments);
         if (symbol !== this._symbolResourceChecked) {
-            var res = maptalks.Util.getExternalResources(symbol, true);
+            var res = Util.getExternalResources(symbol, true);
             if (res) {
                 resources.push.apply(resources, res);
             }
@@ -216,8 +212,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._getClustersToDraw = function _getClustersToDraw(zoomClusters) {
         this._markersToDraw = [];
         var map = this.getMap();
-        var font = maptalks.StringUtil.getFont(this._textSymbol),
-            digitLen = maptalks.StringUtil.stringLength('9', font).toPoint();
+        var font = StringUtil.getFont(this._textSymbol),
+            digitLen = StringUtil.stringLength('9', font).toPoint();
         var extent = map.getContainerExtent(),
             clusters = [];
         var pt = void 0,
@@ -237,13 +233,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             width = sprite.canvas.width;
             height = sprite.canvas.height;
             pt = map._prjToContainerPoint(zoomClusters[p]['center']);
-            pExt = new maptalks.PointExtent(pt.sub(width, height), pt.add(width, height));
+            pExt = new PointExtent(pt.sub(width, height), pt.add(width, height));
             if (!extent.intersects(pExt)) {
                 continue;
             }
 
             if (!zoomClusters[p]['textSize']) {
-                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * (zoomClusters[p]['count'] + '').length, digitLen.y)._multi(1 / 2);
+                zoomClusters[p]['textSize'] = new Point(digitLen.x * (zoomClusters[p]['count'] + '').length, digitLen.y)._multi(1 / 2);
             }
             clusters.push(zoomClusters[p]);
         }
@@ -335,8 +331,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         var argFn = function argFn() {
             return [_this3.getMap().getZoom(), _this3._currentGrid];
         };
-        this._symbol = maptalks.MapboxUtil.loadFunctionTypes(symbol, argFn);
-        this._textSymbol = maptalks.MapboxUtil.loadFunctionTypes(textSymbol, argFn);
+        this._symbol = MapboxUtil.loadFunctionTypes(symbol, argFn);
+        this._textSymbol = MapboxUtil.loadFunctionTypes(textSymbol, argFn);
     };
 
     _class.prototype._drawLayer = function _drawLayer(clusters) {
@@ -352,7 +348,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             if (this._inout === 'in') {
                 dr = [1, 0];
             }
-            this._player = maptalks.animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
+            this._player = animation.Animation.animate({ 'd': dr }, { 'speed': layer.options['animationDuration'], 'easing': 'inAndOut' }, function (frame) {
                 if (frame.state.playState === 'finished') {
                     _this4._animated = false;
                     _this4._drawClusters(clusters, 1);
@@ -444,10 +440,10 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
 
         if (this.layer.options['drawClusterText'] && grid['textSize']) {
-            maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
+            Canvas.prepareCanvasFont(ctx, this._textSymbol);
             var dx = this._textSymbol['textDx'] || 0;
             var dy = this._textSymbol['textDy'] || 0;
-            maptalks.Canvas.fillText(ctx, grid['count'], pt.sub(grid['textSize']).add(dx, dy));
+            Canvas.fillText(ctx, grid['count'], pt.sub(grid['textSize']).add(dx, dy));
         }
         ctx.globalAlpha = opacity;
     };
@@ -456,9 +452,9 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         if (!this._spriteCache) {
             this._spriteCache = {};
         }
-        var key = maptalks.Util.getSymbolStamp(this._symbol);
+        var key = Util.getSymbolStamp(this._symbol);
         if (!this._spriteCache[key]) {
-            this._spriteCache[key] = new maptalks.Marker([0, 0], { 'symbol': this._symbol })._getSprite(this.resources, this.getMap().CanvasClass);
+            this._spriteCache[key] = new Marker([0, 0], { 'symbol': this._symbol })._getSprite(this.resources, this.getMap().CanvasClass);
         }
         return this._spriteCache[key];
     };
@@ -532,8 +528,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             key = gx + '_' + gy;
             if (!grids[key]) {
                 grids[key] = {
-                    'sum': new maptalks.Coordinate(points[i].x, points[i].y),
-                    'center': new maptalks.Coordinate(points[i].x, points[i].y),
+                    'sum': new Coordinate(points[i].x, points[i].y),
+                    'center': new Coordinate(points[i].x, points[i].y),
                     'count': 1,
                     'children': [points[i].geometry],
                     'key': key + ''
@@ -545,7 +541,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     grids[key]['parent'] = preCache['clusterMap'][pkey];
                 }
             } else {
-                grids[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
+                grids[key]['sum']._add(new Coordinate(points[i].x, points[i].y));
                 grids[key]['count']++;
                 grids[key]['center'] = grids[key]['sum'].multi(1 / grids[key]['count']);
                 grids[key]['children'].push(points[i].geometry);
@@ -656,12 +652,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     };
 
     return _class;
-}(maptalks.renderer.VectorLayerCanvasRenderer));
+}(renderer.VectorLayerCanvasRenderer));
 
-exports.ClusterLayer = ClusterLayer;
-
-Object.defineProperty(exports, '__esModule', { value: true });
+export { ClusterLayer };
 
 typeof console !== 'undefined' && console.log('maptalks.markercluster v0.7.0, requires maptalks@^0.26.3.');
-
-})));
