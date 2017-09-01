@@ -170,6 +170,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
 
         const clusters = this._getClustersToDraw(zoomClusters);
+        clusters.zoom = zoom;
         this._drawLayer(clusters);
     }
 
@@ -292,44 +293,36 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _drawLayer(clusters) {
+        const parentClusters = this._currentClusters;
         this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         const layer = this.layer;
-        let dr = [0, 1];
         //if (layer.options['animation'] && this._animated && this._inout === 'out') {
         if (layer.options['animation'] && this._animated && this._inout) {
+            let dr = [0, 1];
             if (this._inout === 'in') {
                 dr = [1, 0];
-                clusters = this._zoomInClusters;
-            } else if (this._inout === 'out') {
-                dr = [0, 1];
             }
-            if (clusters) {
-                this._player = maptalks.animation.Animation.animate(
-                    { 'd' : dr },
-                    { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
-                    frame => {
-                        if (frame.state.playState === 'finished') {
-                            this._animated = false;
-                            if (this._inout === 'in') {
-                                this._drawClusters(this._currentClusters, dr[0]);
-                            } else {
-                                this._drawClusters(clusters, dr[1]);
-                            }
-                            this._drawMarkers();
-                            this.completeRender();
+            this._player = maptalks.animation.Animation.animate(
+                { 'd' : dr },
+                { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
+                frame => {
+                    if (frame.state.playState === 'finished') {
+                        this._animated = false;
+                        this._drawClusters(clusters, 1);
+                        this._drawMarkers();
+                        this.completeRender();
+                    } else {
+                        if (this._inout === 'in') {
+                            this._drawClustersFrame(clusters, parentClusters, frame.styles.d);
                         } else {
-                            this._drawClusters(clusters, frame.styles.d);
-                            this.setCanvasUpdated();
+                            this._drawClustersFrame(parentClusters, clusters, frame.styles.d);
                         }
+                        this.setCanvasUpdated();
                     }
-                )
-                .play();
-                this._drawClusters(clusters, dr[0]);
-            } else {
-                this._drawClusters(this._currentClusters, 1);
-            }
-            this.setCanvasUpdated();
+                }
+            )
+            .play();
         } else {
             this._animated = false;
             this._drawClusters(clusters, 1);
@@ -342,41 +335,48 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         super.drawGeos(this._clusterMaskExtent);
     }
 
-    _drawClusters(clusters, ratio, matrix) {
-        if (!clusters) {
-            return;
-        }
-        matrix = matrix ? matrix['container'] : null;
+    _drawClustersFrame(parentClusters, toClusters, ratio) {
         this._clusterMaskExtent = this.prepareCanvas();
         const map = this.getMap(),
             drawn = {};
-        // draw parent (for animation)
-        if (this.layer.options['animation'] && ratio < 1) {
-            clusters.forEach(c => {
-                if (c.parent) {
-                    let parent = map._prjToContainerPoint(c.parent['center']);
-                    if (!drawn[c.parent.key]) {
-                        if (matrix) {
-                            parent = matrix.applyToPointInstance(parent);
-                        }
-                        drawn[c.parent.key] = 1;
-                        this._drawCluster(parent, c.parent, 1 - ratio);
-                    }
+        if (parentClusters) {
+            parentClusters.forEach(c => {
+                const p = map._prjToContainerPoint(c['center']);
+                if (!drawn[c.key]) {
+                    drawn[c.key] = 1;
+                    this._drawCluster(p, c, 1 - ratio);
                 }
             });
         }
-        if (ratio === 0) {
+        if (ratio === 0 || !toClusters) {
             return;
         }
-        clusters.forEach(c => {
+        const z = parentClusters.zoom,
+            r = map._getResolution(z) * this.layer.options['maxClusterRadius'],
+            min = this._markerExtent.getMin();
+        toClusters.forEach(c => {
             let pt = map._prjToContainerPoint(c['center']);
-            if (c.parent) {
-                const parent = map._prjToContainerPoint(c.parent['center']);
-                pt = parent.add(pt.sub(parent)._multi(ratio));
+            const center = c.center;
+            const pgx = Math.floor((center.x - min.x) / r),
+                pgy = Math.floor((center.y - min.y) / r);
+            const pkey = pgx + '_' + pgy;
+            const parent = this._clusterCache[z]['clusterMap'][pkey];
+            if (parent) {
+                const pp = map._prjToContainerPoint(parent['center']);
+                pt = pp.add(pt.sub(pp)._multi(ratio));
             }
-            if (matrix) {
-                pt = matrix.applyToPointInstance(pt);
-            }
+            this._drawCluster(pt, c, ratio > 0.5 ? 1 : ratio);
+        });
+    }
+
+    _drawClusters(clusters, ratio) {
+        if (!clusters) {
+            return;
+        }
+        this._clusterMaskExtent = this.prepareCanvas();
+        const map = this.getMap();
+        clusters.forEach(c => {
+            const pt = map._prjToContainerPoint(c['center']);
             this._drawCluster(pt, c, ratio > 0.5 ? 1 : ratio);
         });
 
@@ -590,21 +590,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             return;
         }
         this._inout = param['from'] > param['to'] ? 'in' : 'out';
-        const fromZoom = param['from'];
-        // const zoom = this.getMap().getZoom();
         this._animated = true;
         this._computeGrid();
-        if (this._inout === 'in' && this.layer.options['animation']) {
-            if (!this._clusterCache[fromZoom]) {
-                this._clusterCache[fromZoom] = this._computeZoomGrid(fromZoom);
-            }
-            if (this._clusterCache[fromZoom]) {
-                const tempCluster = this._clusterCache[fromZoom].clusters;
-                this._zoomInClusters = this._getClustersToDraw(tempCluster);
-            } else {
-                this._zoomInClusters = null;
-            }
-        }
         super.onZoomEnd.apply(this, arguments);
     }
 
