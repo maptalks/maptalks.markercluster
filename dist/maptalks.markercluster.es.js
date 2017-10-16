@@ -4,7 +4,7 @@
  * (c) 2016-2017 maptalks.org
  */
 /*!
- * requires maptalks@^0.26.3 
+ * requires maptalks@>=0.26.3 
  */
 import { Canvas, Coordinate, Geometry, MapboxUtil, Marker, Point, PointExtent, StringUtil, Util, VectorLayer, animation, renderer } from 'maptalks';
 
@@ -656,4 +656,4 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
 export { ClusterLayer };
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.7.0, requires maptalks@^0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.7.0, requires maptalks@>=0.26.3.');
