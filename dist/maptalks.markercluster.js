@@ -29,7 +29,8 @@ var options = {
     'animationDuration': 450,
     'maxClusterZoom': null,
     'noClusterWithOneMarker': true,
-    'forceRenderOnZooming': true
+    'forceRenderOnZooming': true,
+    'interact': true
 };
 
 var ClusterLayer = function (_maptalks$VectorLayer) {
@@ -172,6 +173,26 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         _this2._animated = true;
         _this2._refreshStyle();
         _this2._clusterNeedRedraw = true;
+        //
+        if (_this2.layer.options['interact']) {
+            var map = _this2.layer.getMap();
+            var _id = maptalks.INTERNAL_LAYER_PREFIX + '_markercluster_spreadoutLayer';
+            _this2._spreadoutLayer = !_this2._spreadoutLayer ? new maptalks.VectorLayer(_id).addTo(map) : _this2._spreadoutLayer;
+            map.on('click', function (e) {
+                var result = this.identify(e.coordinate);
+                var center = result.center;
+                var len = result.children.length;
+                for (var i = 0; i < len; i++) {
+                    var to = this._calculateTo(center, i, len);
+                    this._createline(center, to, result.children[i]);
+                }
+            }, _this2);
+            map.on('zoomend', function () {
+                if (this._spreadoutLayer) {
+                    this._spreadoutLayer.clear();
+                }
+            }, _this2);
+        }
         return _this2;
     }
 
@@ -377,6 +398,47 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
     _class.prototype._drawMarkers = function _drawMarkers() {
         _maptalks$renderer$Ve.prototype.drawGeos.call(this, this._clusterMaskExtent);
+    };
+
+    _class.prototype._calculateTo = function _calculateTo(center, index, count) {
+        var map = this.layer.getMap();
+        var d = 60;
+        var angle = 0;
+        if (count <= 10) {
+            d = 60;
+            angle = 360 / count * 2 * index;
+        } else {
+            d = 60 + index * 5;
+            angle = 32 * 2 * index;
+        }
+        var _center = map.coordinateToContainerPoint(center);
+        var x = _center.x + d * Math.cos(angle * Math.PI / 360);
+        var y = _center.y - d * Math.sin(angle * Math.PI / 360);
+        var to = map.containerPointToCoordinate(new maptalks.Point(x, y));
+        return to;
+    };
+
+    _class.prototype._createline = function _createline(from, to, marker) {
+        var sprite = null;
+        var markerFile = this.layer.options['markerFile'];
+        var layer = this._spreadoutLayer;
+        new maptalks.LineString([from, to], {
+            symbol: [{
+                'lineWidth': 1,
+                'lineColor': 'rgba(36,138,74,1)',
+                'lineCap': 'round'
+            }]
+        }).addTo(layer).animateShow({
+            duration: 500,
+            easing: 'out'
+        }, function (frm, coord) {
+            sprite = !sprite ? new maptalks.Marker(coord, {
+                symbol: {
+                    'markerFile': markerFile
+                },
+                properties: marker.getProperties()
+            }).addTo(layer) : sprite.setCoordinates(coord);
+        }).play();
     };
 
     _class.prototype._drawClustersFrame = function _drawClustersFrame(parentClusters, toClusters, ratio) {
