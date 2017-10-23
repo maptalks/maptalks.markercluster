@@ -141,6 +141,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             const _id = `${maptalks.INTERNAL_LAYER_PREFIX}_markercluster_spreadoutLayer`;
             this._spreadoutLayer = (!this._spreadoutLayer) ? new maptalks.VectorLayer(_id).addTo(map) : this._spreadoutLayer;
             map.on('click', function (e) {
+                this._spreadoutLayer.clear();
                 const result = this.identify(e.coordinate);
                 const center = result.center;
                 const len = result.children.length;
@@ -148,7 +149,6 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                     const to = this._calculateTo(center, i, len);
                     this._createline(center, to, result.children[i]);
                 }
-                this._spreadoutLayer.clear();
             }, this);
             map.on('zoomend', function () {
                 if (this._spreadoutLayer) {
