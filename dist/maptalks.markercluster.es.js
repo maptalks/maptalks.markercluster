@@ -182,6 +182,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     var to = this._calculateTo(center, i, len);
                     this._createline(center, to, result.children[i]);
                 }
+                this._spreadoutLayer.clear();
             }, _this2);
             map.on('zoomend', function () {
                 if (this._spreadoutLayer) {
