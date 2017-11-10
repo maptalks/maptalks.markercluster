@@ -376,26 +376,53 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _createline(from, to, marker) {
-        let sprite = null;
+        let sprite = null, line = null;
+        let vx = 0, vy = 0;
+        let ax = 0, ay = 0;
+        let dx = null, dy = null;
+        const targetX = to.x, targetY = to.y;
+        const spring = 0.2, f = 0.8;
+        let spriteXY = null;
         const markerFile = this.layer.options['markerFile'];
         const layer = this._spreadoutLayer;
-        new maptalks.LineString([from, to], {
-            symbol: [{
-                'lineWidth': 1,
-                'lineColor': 'rgba(36,138,74,1)',
-                'lineCap': 'round'
-            }]
-        }).addTo(layer).animateShow({
-            duration: 500,
-            easing: 'out'
-        }, function (frm, coord) {
-            sprite = !sprite ? new maptalks.Marker(coord, {
-                symbol: {
-                    'markerFile': markerFile
-                },
-                properties:marker.getProperties()
-            }).addTo(layer) : sprite.setCoordinates(coord);
-        }).play();
+        let animId = null;
+        function play() {
+            if (!line) {
+                line = new maptalks.LineString([from, from], {
+                    symbol: [{
+                        'lineWidth': 1,
+                        'lineColor': 'rgba(36,138,74,1)',
+                        'lineCap': 'round'
+                    }]
+                }).addTo(layer);
+                sprite = new maptalks.Marker(from, {
+                    symbol: {
+                        'markerFile': markerFile
+                    },
+                    properties: marker.getProperties()
+                }).addTo(layer);
+            } else {
+                spriteXY = sprite.getCenter();
+                dx = targetX - spriteXY.x;
+                ax = dx * spring;
+                vx += ax;
+                vx *= f;
+                spriteXY.x += vx;
+                dy = targetY - spriteXY.y;
+                ay = dy * spring;
+                vy += ay;
+                vy *= f;
+                spriteXY.y += vy;
+                sprite.setCoordinates(spriteXY);
+                line.setCoordinates([from, spriteXY]);
+            }
+            if (spriteXY && spriteXY.x === to.x && spriteXY.y === to.y && animId) {
+                cancelAnimationFrame(animId);
+            } else {
+                animId = requestAnimationFrame(play);
+            }
+        }
+        play();
     }
 
     _drawClustersFrame(parentClusters, toClusters, ratio) {
