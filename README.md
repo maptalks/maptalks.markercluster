@@ -52,6 +52,7 @@ new maptalks.ClusterLayer(id, data, options)
     * drawClusterText **Boolean** whether to draw cluster texts (true by default)
     * maxClusterZoom **Number** the max zoom to draw as clusters (null by default)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
+    * markerFile **String** scattered children marker's symbol file path
     * animationDuration **Number** the animation duration
     * Other options defined in [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html)
 
