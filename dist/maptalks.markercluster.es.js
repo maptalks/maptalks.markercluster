@@ -441,12 +441,15 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                         'lineCap': 'round'
                     }]
                 }).addTo(layer);
-                sprite = new Marker(from, {
+                var opt = markerFile ? {
                     symbol: {
                         'markerFile': markerFile
                     },
                     properties: marker.getProperties()
-                }).addTo(layer);
+                } : {
+                    properties: marker.getProperties()
+                };
+                sprite = new Marker(from, opt).addTo(layer);
             } else {
                 spriteXY = sprite.getCenter();
                 dx = targetX - spriteXY.x;
