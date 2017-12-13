@@ -144,6 +144,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 this._spreadoutLayer.clear();
                 const result = this.identify(e.coordinate);
                 const center = result.center;
+                if (!result.children) return;
                 const len = result.children.length;
                 for (let i = 0; i < len; i++) {
                     const to = this._calculateTo(center, i, len);
