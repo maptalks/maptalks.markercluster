@@ -138,7 +138,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         //
         if (this.layer.options['interact']) {
             const map = this.layer.getMap();
-            const _id = `${maptalks.INTERNAL_LAYER_PREFIX}_markercluster_spreadoutLayer`;
+            const layerid = this.layer.getId();
+            const _id = `${maptalks.INTERNAL_LAYER_PREFIX}_markercluster_${layerid}_spreadoutLayer`;
             this._spreadoutLayer = (!this._spreadoutLayer) ? new maptalks.VectorLayer(_id).addTo(map) : this._spreadoutLayer;
             map.on('click', function (e) {
                 this._spreadoutLayer.clear();

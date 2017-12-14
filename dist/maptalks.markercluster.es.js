@@ -172,12 +172,14 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         //
         if (_this2.layer.options['interact']) {
             var map = _this2.layer.getMap();
-            var _id = INTERNAL_LAYER_PREFIX + '_markercluster_spreadoutLayer';
+            var layerid = _this2.layer.getId();
+            var _id = INTERNAL_LAYER_PREFIX + '_markercluster_' + layerid + '_spreadoutLayer';
             _this2._spreadoutLayer = !_this2._spreadoutLayer ? new VectorLayer(_id).addTo(map) : _this2._spreadoutLayer;
             map.on('click', function (e) {
                 this._spreadoutLayer.clear();
                 var result = this.identify(e.coordinate);
                 var center = result.center;
+                if (!result.children) return;
                 var len = result.children.length;
                 for (var i = 0; i < len; i++) {
                     var to = this._calculateTo(center, i, len);
