@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.7.0
+ * maptalks.markercluster v0.8.0
  * LICENSE : MIT
  * (c) 2016-2017 maptalks.org
  */
@@ -22,6 +22,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var options = {
     'maxClusterRadius': 160,
+    'textSumProperty': null,
     'symbol': null,
     'drawClusterText': true,
     'textSymbol': null,
@@ -243,7 +244,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             }
 
             if (!zoomClusters[p]['textSize']) {
-                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * (zoomClusters[p]['count'] + '').length, digitLen.y)._multi(1 / 2);
+                var text = this._getClusterText(zoomClusters[p]);
+                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * text.length, digitLen.y)._multi(1 / 2);
             }
             clusters.push(zoomClusters[p]);
         }
@@ -429,8 +431,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         });
     };
 
-    _class.prototype._drawCluster = function _drawCluster(pt, grid, op) {
-        this._currentGrid = grid;
+    _class.prototype._drawCluster = function _drawCluster(pt, cluster, op) {
+        this._currentGrid = cluster;
         var ctx = this.context;
         var sprite = this._getSprite();
         var opacity = ctx.globalAlpha;
@@ -443,13 +445,19 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
-        if (this.layer.options['drawClusterText'] && grid['textSize']) {
+        if (this.layer.options['drawClusterText'] && cluster['textSize']) {
             maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
             var dx = this._textSymbol['textDx'] || 0;
             var dy = this._textSymbol['textDy'] || 0;
-            maptalks.Canvas.fillText(ctx, grid['count'], pt.sub(grid['textSize']).add(dx, dy));
+            var text = this._getClusterText(cluster);
+            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize']).add(dx, dy));
         }
         ctx.globalAlpha = opacity;
+    };
+
+    _class.prototype._getClusterText = function _getClusterText(cluster) {
+        var text = this.layer.options['textSumProperty'] ? cluster['textSumProperty'] : cluster['count'];
+        return text + '';
     };
 
     _class.prototype._getSprite = function _getSprite() {
@@ -518,6 +526,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         // 2. find point's grid in the grids
         // 3. sum up the point into the grid's collection
         var points = this._markerPoints;
+        var sumProperty = this.layer.options['textSumProperty'];
         var grids = {},
             min = this._markerExtent.getMin();
         var gx = void 0,
@@ -527,6 +536,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             pgy = void 0,
             pkey = void 0;
         for (var i = 0, len = points.length; i < len; i++) {
+            var geo = points[i].geometry;
+            var sumProp = 0;
+
+            if (sumProperty && geo.getProperties() && geo.getProperties()[sumProperty]) {
+                sumProp = geo.getProperties()[sumProperty];
+            }
+
             gx = Math.floor((points[i].x - min.x) / r);
             gy = Math.floor((points[i].y - min.y) / r);
             key = gx + '_' + gy;
@@ -535,7 +551,8 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     'sum': new maptalks.Coordinate(points[i].x, points[i].y),
                     'center': new maptalks.Coordinate(points[i].x, points[i].y),
                     'count': 1,
-                    'children': [points[i].geometry],
+                    'textSumProperty': sumProp,
+                    'children': [geo],
                     'key': key + ''
                 };
                 if (preT && preCache) {
@@ -545,10 +562,12 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                     grids[key]['parent'] = preCache['clusterMap'][pkey];
                 }
             } else {
+
                 grids[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
                 grids[key]['count']++;
                 grids[key]['center'] = grids[key]['sum'].multi(1 / grids[key]['count']);
-                grids[key]['children'].push(points[i].geometry);
+                grids[key]['children'].push(geo);
+                grids[key]['textSumProperty'] += sumProp;
             }
         }
         return this._mergeClusters(grids, r / 2);
@@ -605,6 +624,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
+                    grid['textSumProperty'] += toMerge[i].textSumProperty;
                     grid['children'].concat(toMerge[i].geometry);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];
@@ -662,6 +682,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.7.0, requires maptalks@>=0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.0, requires maptalks@>=0.26.3.');
 
 })));

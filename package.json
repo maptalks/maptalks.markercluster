@@ -1,6 +1,6 @@
 {
   "name": "maptalks.markercluster",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "A layer of maptalks to cluster markers.",
   "license": "MIT",
   "repository": {
@@ -17,7 +17,7 @@
     "test": "gulp test",
     "pretest": "npm run lint",
     "prepublish": "npm run lint && gulp minify",
-    "dev" : "gulp watch"
+    "dev": "gulp watch"
   },
   "devDependencies": {
     "babel-eslint": "^7.1.1",
