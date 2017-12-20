@@ -2,6 +2,7 @@ import * as maptalks from 'maptalks';
 
 const options = {
     'maxClusterRadius' : 160,
+    'textSumProperty' : null,
     'symbol' : null,
     'drawClusterText' : true,
     'textSymbol' : null,
@@ -200,7 +201,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             }
 
             if (!zoomClusters[p]['textSize']) {
-                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * (zoomClusters[p]['count'] + '').length, digitLen.y)._multi(1 / 2);
+                const text = this._getClusterText(zoomClusters[p]);
+                zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * text.length, digitLen.y)._multi(1 / 2);
             }
             clusters.push(zoomClusters[p]);
         }
@@ -382,8 +384,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     }
 
-    _drawCluster(pt, grid, op) {
-        this._currentGrid = grid;
+    _drawCluster(pt, cluster, op) {
+        this._currentGrid = cluster;
         const ctx = this.context;
         const sprite = this._getSprite();
         const opacity = ctx.globalAlpha;
@@ -396,15 +398,20 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             ctx.drawImage(sprite.canvas, pos.x, pos.y);
         }
 
-        if (this.layer.options['drawClusterText'] && grid['textSize']) {
+        if (this.layer.options['drawClusterText'] && cluster['textSize']) {
             maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
             const dx = this._textSymbol['textDx'] || 0;
             const dy = this._textSymbol['textDy'] || 0;
-            maptalks.Canvas.fillText(ctx, grid['count'], pt.sub(grid['textSize']).add(dx, dy));
+            const text = this._getClusterText(cluster);
+            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize']).add(dx, dy));
         }
         ctx.globalAlpha = opacity;
     }
 
+    _getClusterText(cluster) {
+        const text = this.layer.options['textSumProperty'] ? cluster['textSumProperty'] : cluster['count'];
+        return text + '';
+    }
 
     _getSprite() {
         if (!this._spriteCache) {
@@ -471,11 +478,19 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         // 2. find point's grid in the grids
         // 3. sum up the point into the grid's collection
         const points = this._markerPoints;
+        const prop = this.layer.options['textSumProperty'];
         const grids = {},
             min = this._markerExtent.getMin();
         let gx, gy, key,
             pgx, pgy, pkey;
         for (let i = 0, len = points.length; i < len; i++) {
+            const geo = points[i].geometry;
+            let sumProp = 0;
+
+            if (prop && geo.getProperties() && geo.getProperties()[prop]) {
+                sumProp = geo.getProperties()[prop];
+            }
+
             gx = Math.floor((points[i].x - min.x) / r);
             gy = Math.floor((points[i].y - min.y) / r);
             key = gx + '_' + gy;
@@ -484,7 +499,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                     'sum' : new maptalks.Coordinate(points[i].x, points[i].y),
                     'center' : new maptalks.Coordinate(points[i].x, points[i].y),
                     'count' : 1,
-                    'children' :[points[i].geometry],
+                    'textSumProperty' : sumProp,
+                    'children' :[geo],
                     'key' : key + ''
                 };
                 if (preT && preCache) {
@@ -494,10 +510,12 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                     grids[key]['parent'] = preCache['clusterMap'][pkey];
                 }
             } else {
+
                 grids[key]['sum']._add(new maptalks.Coordinate(points[i].x, points[i].y));
                 grids[key]['count']++;
                 grids[key]['center'] = grids[key]['sum'].multi(1 / grids[key]['count']);
-                grids[key]['children'].push(points[i].geometry);
+                grids[key]['children'].push(geo);
+                grids[key]['textSumProperty'] += sumProp;
             }
         }
         return this._mergeClusters(grids, r / 2);
@@ -553,6 +571,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
+                    grid['textSumProperty'] += toMerge[i].textSumProperty;
                     grid['children'].concat(toMerge[i].geometry);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];

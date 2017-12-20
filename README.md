@@ -50,6 +50,7 @@ new maptalks.ClusterLayer(id, data, options)
     * symbol **Object** symbol of clusters
     * textSymbol **Object**  symbol of cluster texts
     * drawClusterText **Boolean** whether to draw cluster texts (true by default)
+    * textSumProperty **String**  property name to sum up to display as the cluster text
     * maxClusterZoom **Number** the max zoom to draw as clusters (null by default)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
     * animationDuration **Number** the animation duration
