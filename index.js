@@ -478,7 +478,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         // 2. find point's grid in the grids
         // 3. sum up the point into the grid's collection
         const points = this._markerPoints;
-        const prop = this.layer.options['textSumProperty'];
+        const sumProperty = this.layer.options['textSumProperty'];
         const grids = {},
             min = this._markerExtent.getMin();
         let gx, gy, key,
@@ -487,8 +487,8 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             const geo = points[i].geometry;
             let sumProp = 0;
 
-            if (prop && geo.getProperties() && geo.getProperties()[prop]) {
-                sumProp = geo.getProperties()[prop];
+            if (sumProperty && geo.getProperties() && geo.getProperties()[sumProperty]) {
+                sumProp = geo.getProperties()[sumProperty];
             }
 
             gx = Math.floor((points[i].x - min.x) / r);
