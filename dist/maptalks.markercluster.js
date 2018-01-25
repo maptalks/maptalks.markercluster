@@ -1,7 +1,7 @@
 /*!
- * maptalks.markercluster v0.8.0
+ * maptalks.markercluster v0.8.1
  * LICENSE : MIT
- * (c) 2016-2017 maptalks.org
+ * (c) 2016-2018 maptalks.org
  */
 /*!
  * requires maptalks@>=0.26.3 
@@ -344,7 +344,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._drawLayer = function _drawLayer(clusters) {
         var _this4 = this;
 
-        var parentClusters = this._currentClusters;
+        var parentClusters = this._currentClusters || clusters;
         this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         var layer = this.layer;
@@ -682,6 +682,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.0, requires maptalks@>=0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.1, requires maptalks@>=0.26.3.');
 
 })));
