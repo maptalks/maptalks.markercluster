@@ -344,7 +344,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
     _class.prototype._drawLayer = function _drawLayer(clusters) {
         var _this4 = this;
 
-        var parentClusters = this._currentClusters;
+        var parentClusters = clusters;
         this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         var layer = this.layer;
