@@ -295,7 +295,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
     }
 
     _drawLayer(clusters) {
-        const parentClusters =  this._currentClusters || clusters;
+        const parentClusters = this._currentClusters || clusters;
         this._currentClusters = clusters;
         delete this._clusterMaskExtent;
         const layer = this.layer;

@@ -17,7 +17,8 @@
     "test": "gulp test",
     "pretest": "npm run lint",
     "prepublish": "npm run lint && gulp minify",
-    "dev": "gulp watch"
+    "dev": "gulp watch",
+    "build" : "gulp minify"
   },
   "devDependencies": {
     "babel-eslint": "^7.1.1",
