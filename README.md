@@ -54,6 +54,7 @@ new maptalks.ClusterLayer(id, data, options)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
     * markerFile **String** scattered children marker's symbol file path
     * animationDuration **Number** the animation duration
+    * interact **Boolean** whether spread out the children when clicking the cluster
     * Other options defined in [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html)
 
 ### `config(key, value)`

@@ -1,7 +1,7 @@
 /*!
  * maptalks.markercluster v0.7.0
  * LICENSE : MIT
- * (c) 2016-2017 maptalks.org
+ * (c) 2016-2018 maptalks.org
  */
 /*!
  * requires maptalks@>=0.26.3 
@@ -702,7 +702,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
-                    grid['children'].concat(toMerge[i].geometry);
+                    grid['children'] = grid['children'].concat(toMerge[i].children);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];
                 }
