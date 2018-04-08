@@ -397,7 +397,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                         'lineCap': 'round'
                     }]
                 }).addTo(layer);
-                let opt = markerFile ? {
+                const opt = markerFile ? {
                     symbol: {
                         'markerFile': markerFile
                     },
@@ -648,7 +648,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
-                    grid['children'].concat(toMerge[i].geometry);
+                    grid['children'] = grid['children'].concat(toMerge[i].children);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];
                 }
