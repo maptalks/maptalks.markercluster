@@ -46,3 +46,5 @@ node_modules
 
 #example deploy config
 examples/replace.json
+/package-lock.json
+/dist
