@@ -648,6 +648,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                 if (grids[toMerge[i].key]) {
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
+                    grid['textSumProperty'] += toMerge[i].textSumProperty;
                     grid['children'] = grid['children'].concat(toMerge[i].children);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];
