@@ -53,7 +53,9 @@ new maptalks.ClusterLayer(id, data, options)
     * textSumProperty **String**  property name to sum up to display as the cluster text
     * maxClusterZoom **Number** the max zoom to draw as clusters (null by default)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
+    * markerFile **String** scattered children marker's symbol file path
     * animationDuration **Number** the animation duration
+    * interact **Boolean** whether spread out the children when clicking the cluster.Only the        cluster's children less than 24 can spread out.
     * Other options defined in [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html)
 
 ### `config(key, value)`

@@ -10,7 +10,8 @@ const options = {
     'animationDuration' : 450,
     'maxClusterZoom' : null,
     'noClusterWithOneMarker':true,
-    'forceRenderOnZooming' : true
+    'forceRenderOnZooming' : true,
+    'interact':true
 };
 
 export class ClusterLayer extends maptalks.VectorLayer {
@@ -135,6 +136,30 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         this._animated = true;
         this._refreshStyle();
         this._clusterNeedRedraw = true;
+        //
+        if (this.layer.options['interact']) {
+            const map = this.layer.getMap();
+            const layerid = this.layer.getId();
+            const _id = `${maptalks.INTERNAL_LAYER_PREFIX}_markercluster_${layerid}_spreadoutLayer`;
+            this._spreadoutLayer = (!this._spreadoutLayer) ? new maptalks.VectorLayer(_id).addTo(map) : this._spreadoutLayer;
+            map.on('click', function (e) {
+                this._spreadoutLayer.clear();
+                const result = this.identify(e.coordinate);
+                const center = result.center;
+                if (!result.children) return;
+                const len = result.children.length;
+                if (len > 24) return;
+                for (let i = 0; i < len; i++) {
+                    const to = this._calculateTo(center, i, len);
+                    this._createline(center, to, result.children[i]);
+                }
+            }, this);
+            map.on('zoomend', function () {
+                if (this._spreadoutLayer) {
+                    this._spreadoutLayer.clear();
+                }
+            }, this);
+        }
     }
 
     checkResources() {
@@ -335,6 +360,77 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
     _drawMarkers() {
         super.drawGeos(this._clusterMaskExtent);
+    }
+
+    _calculateTo(center, index, count) {
+        const map = this.layer.getMap();
+        let d = 60;
+        let angle = 0;
+        if (count <= 10) {
+            d = 60;
+            angle = (360 / count) * 2 * index;
+        } else {
+            d = 60 + index * 5;
+            angle = 32 * 2 * index;
+        }
+        const _center = map.coordinateToContainerPoint(center);
+        const x = _center.x + d * Math.cos(angle * Math.PI / 360);
+        const y = _center.y - d * Math.sin(angle * Math.PI / 360);
+        const to = map.containerPointToCoordinate(new maptalks.Point(x, y));
+        return to;
+    }
+
+    _createline(from, to, marker) {
+        let sprite = null, line = null;
+        let vx = 0, vy = 0;
+        let ax = 0, ay = 0;
+        let dx = null, dy = null;
+        const targetX = to.x, targetY = to.y;
+        const spring = 0.2, f = 0.8;
+        let spriteXY = null;
+        const markerFile = this.layer.options['markerFile'];
+        const layer = this._spreadoutLayer;
+        let animId = null;
+        function play() {
+            if (!line) {
+                line = new maptalks.LineString([from, from], {
+                    symbol: [{
+                        'lineWidth': 1,
+                        'lineColor': 'rgba(36,138,74,1)',
+                        'lineCap': 'round'
+                    }]
+                }).addTo(layer);
+                const opt = markerFile ? {
+                    symbol: {
+                        'markerFile': markerFile
+                    },
+                    properties: marker.getProperties()
+                } : {
+                    properties: marker.getProperties()
+                };
+                sprite = new maptalks.Marker(from, opt).addTo(layer);
+            } else {
+                spriteXY = sprite.getCenter();
+                dx = targetX - spriteXY.x;
+                ax = dx * spring;
+                vx += ax;
+                vx *= f;
+                spriteXY.x += vx;
+                dy = targetY - spriteXY.y;
+                ay = dy * spring;
+                vy += ay;
+                vy *= f;
+                spriteXY.y += vy;
+                sprite.setCoordinates(spriteXY);
+                line.setCoordinates([from, spriteXY]);
+            }
+            if (spriteXY && spriteXY.x === to.x && spriteXY.y === to.y && animId) {
+                cancelAnimationFrame(animId);
+            } else {
+                animId = requestAnimationFrame(play);
+            }
+        }
+        play();
     }
 
     _drawClustersFrame(parentClusters, toClusters, ratio) {
@@ -572,7 +668,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
                     grid['sum']._add(toMerge[i].sum);
                     grid['count'] += toMerge[i].count;
                     grid['textSumProperty'] += toMerge[i].textSumProperty;
-                    grid['children'].concat(toMerge[i].geometry);
+                    grid['children'] = grid['children'].concat(toMerge[i].children);
                     clusterMap[toMerge[i].key] = grid;
                     delete grids[toMerge[i].key];
                 }
