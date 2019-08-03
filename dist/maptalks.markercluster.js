@@ -1,7 +1,7 @@
 /*!
- * maptalks.markercluster v0.8.2
+ * maptalks.markercluster v0.8.3
  * LICENSE : MIT
- * (c) 2016-2018 maptalks.org
+ * (c) 2016-2019 maptalks.org
  */
 /*!
  * requires maptalks@>=0.26.3 
@@ -271,6 +271,16 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         }
     };
 
+    _class.prototype.onGeometryShow = function onGeometryShow() {
+        this._clusterNeedRedraw = true;
+        _maptalks$renderer$Ve.prototype.onGeometryShow.apply(this, arguments);
+    };
+
+    _class.prototype.onGeometryHide = function onGeometryHide() {
+        this._clusterNeedRedraw = true;
+        _maptalks$renderer$Ve.prototype.onGeometryHide.apply(this, arguments);
+    };
+
     _class.prototype.onGeometryAdd = function onGeometryAdd() {
         this._clusterNeedRedraw = true;
         _maptalks$renderer$Ve.prototype.onGeometryAdd.apply(this, arguments);
@@ -447,10 +457,11 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
         if (this.layer.options['drawClusterText'] && cluster['textSize']) {
             maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
+            ctx.textBaseline = 'middle';
             var dx = this._textSymbol['textDx'] || 0;
             var dy = this._textSymbol['textDy'] || 0;
             var text = this._getClusterText(cluster);
-            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize']).add(dx, dy));
+            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize'].x, 0)._add(dx, dy));
         }
         ctx.globalAlpha = opacity;
     };
@@ -476,6 +487,9 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         var extent = void 0,
             c = void 0;
         this.layer.forEach(function (g) {
+            if (!g.isVisible()) {
+                return;
+            }
             c = g._getPrjCoordinates();
             if (!extent) {
                 extent = g._getPrjExtent();
@@ -682,6 +696,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.2, requires maptalks@>=0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.3, requires maptalks@>=0.26.3.');
 
 })));
