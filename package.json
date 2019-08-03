@@ -28,7 +28,7 @@
     "eslint-plugin-mocha": "^4.8.0",
     "expect-maptalks": "^0.2.5",
     "expect.js": "^0.3.1",
-    "gulp": "^3.9.0",
+    "gulp": "^4.0.2",
     "happen": "^0.3.1",
     "karma": "^1.3.0",
     "karma-chrome-launcher": "^2.0.0",
@@ -43,6 +43,7 @@
     "maptalks-build-helpers": "^0.4.4",
     "minimist": "^1.2.0",
     "mocha": "^2.4.5",
+    "natives": "^1.1.6",
     "rollup-plugin-babel": "^3.0.6"
   },
   "peerDependencies": {

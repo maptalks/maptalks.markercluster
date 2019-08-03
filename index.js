@@ -228,6 +228,16 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
     }
 
+    onGeometryShow() {
+        this._clusterNeedRedraw = true;
+        super.onGeometryShow.apply(this, arguments);
+    }
+
+    onGeometryHide() {
+        this._clusterNeedRedraw = true;
+        super.onGeometryHide.apply(this, arguments);
+    }
+
     onGeometryAdd() {
         this._clusterNeedRedraw = true;
         super.onGeometryAdd.apply(this, arguments);
@@ -400,10 +410,11 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
         if (this.layer.options['drawClusterText'] && cluster['textSize']) {
             maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
+            ctx.textBaseline = 'middle';
             const dx = this._textSymbol['textDx'] || 0;
             const dy = this._textSymbol['textDy'] || 0;
             const text = this._getClusterText(cluster);
-            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize']).add(dx, dy));
+            maptalks.Canvas.fillText(ctx, text, pt.sub(cluster['textSize'].x, 0)._add(dx, dy));
         }
         ctx.globalAlpha = opacity;
     }
@@ -428,6 +439,9 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         const points = [];
         let extent, c;
         this.layer.forEach(g => {
+            if (!g.isVisible()) {
+                return;
+            }
             c = g._getPrjCoordinates();
             if (!extent) {
                 extent = g._getPrjExtent();

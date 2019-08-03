@@ -12,25 +12,25 @@ gulp.task('build', () => {
     return bundleHelper.bundle('index.js');
 });
 
-gulp.task('minify', ['build'], () => {
+gulp.task('minify', gulp.series(['build'], () => {
     bundleHelper.minify();
-});
+}));
 
-gulp.task('watch', ['build'], () => {
-    gulp.watch(['index.js', './gulpfile.js'], ['build']);
-});
+gulp.task('watch', gulp.series(['build'], () => {
+    gulp.watch(['index.js', './gulpfile.js'], gulp.series(['build']));
+}));
 
 gulp.task('runTest', () => {
     testHelper.test(karmaConfig);
 });
 
-gulp.task('test', ['build', 'runTest']);
+gulp.task('test', gulp.series(['build', 'runTest']));
 
-gulp.task('tdd', ['build'], () => {
+gulp.task('tdd', gulp.series(['build'], () => {
     karmaConfig.singleRun = false;
     gulp.watch(['index.js'], ['test']);
     testHelper.test(karmaConfig);
-});
+}));
 
-gulp.task('default', ['watch']);
+gulp.task('default', gulp.series(['watch']));
 
