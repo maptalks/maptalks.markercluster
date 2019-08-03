@@ -12,8 +12,9 @@ gulp.task('build', () => {
     return bundleHelper.bundle('index.js');
 });
 
-gulp.task('minify', gulp.series(['build'], () => {
+gulp.task('minify', gulp.series(['build'], done => {
     bundleHelper.minify();
+    done();
 }));
 
 gulp.task('watch', gulp.series(['build'], () => {
