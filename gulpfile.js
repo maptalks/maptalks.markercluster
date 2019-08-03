@@ -20,8 +20,9 @@ gulp.task('watch', gulp.series(['build'], () => {
     gulp.watch(['index.js', './gulpfile.js'], gulp.series(['build']));
 }));
 
-gulp.task('runTest', () => {
+gulp.task('runTest', done => {
     testHelper.test(karmaConfig);
+    done();
 });
 
 gulp.task('test', gulp.series(['build', 'runTest']));
