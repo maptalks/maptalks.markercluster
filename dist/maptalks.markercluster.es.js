@@ -1,7 +1,7 @@
 /*!
  * maptalks.markercluster v0.8.3
  * LICENSE : MIT
- * (c) 2016-2019 maptalks.org
+ * (c) 2016-2021 maptalks.org
  */
 /*!
  * requires maptalks@>=0.26.3 
@@ -414,7 +414,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             var pgx = Math.floor((center.x - min.x) / r),
                 pgy = Math.floor((center.y - min.y) / r);
             var pkey = pgx + '_' + pgy;
-            var parent = _this5._clusterCache[z]['clusterMap'][pkey];
+            var parent = _this5._clusterCache[z] ? _this5._clusterCache[z]['clusterMap'][pkey] : null;
             if (parent) {
                 var pp = map._prjToContainerPoint(parent['center']);
                 pt = pp.add(pt.sub(pp)._multi(ratio));
