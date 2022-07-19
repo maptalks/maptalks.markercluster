@@ -372,7 +372,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
             const pgx = Math.floor((center.x - min.x) / r),
                 pgy = Math.floor((center.y - min.y) / r);
             const pkey = pgx + '_' + pgy;
-            const parent = this._clusterCache[z] ? this._clusterCache[z]['clusterMap'][pkey]: null;
+            const parent = this._clusterCache[z] ? this._clusterCache[z]['clusterMap'][pkey] : null;
             if (parent) {
                 const pp = map._prjToContainerPoint(parent['center']);
                 pt = pp.add(pt.sub(pp)._multi(ratio));
