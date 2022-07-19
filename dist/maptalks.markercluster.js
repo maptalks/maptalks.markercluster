@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.8.4
+ * maptalks.markercluster v0.8.5
  * LICENSE : MIT
  * (c) 2016-2022 maptalks.org
  */
@@ -693,6 +693,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.4');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.5');
 
 })));

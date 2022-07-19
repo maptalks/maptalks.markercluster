@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.8.4
+ * maptalks.markercluster v0.8.5
  * LICENSE : MIT
  * (c) 2016-2022 maptalks.org
  */
@@ -687,4 +687,4 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
 export { ClusterLayer };
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.4');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.5');
