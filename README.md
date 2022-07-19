@@ -54,7 +54,8 @@ new maptalks.ClusterLayer(id, data, options)
     * maxClusterZoom **Number** the max zoom to draw as clusters (null by default)
     * animation **Boolean** whether animate the clusters when zooming (true by default)
     * animationDuration **Number** the animation duration
-    * Other options defined in [maptalks.VectorLayer](https://maptalks.github.io/docs/api/VectorLayer.html)
+    * noClusterWithOneMarker **Boolean** whether display cluster with only one marker (false by default)
+    * Other options defined in [maptalks.VectorLayer](https://maptalks.org/maptalks.js/api/0.x/VectorLayer.html)
 
 ### `config(key, value)`
 

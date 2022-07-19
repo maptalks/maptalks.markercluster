@@ -1,6 +1,6 @@
 {
   "name": "maptalks.markercluster",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "A layer of maptalks to cluster markers.",
   "license": "MIT",
   "repository": {
@@ -45,9 +45,6 @@
     "mocha": "^2.4.5",
     "natives": "^1.1.6",
     "rollup-plugin-babel": "^3.0.6"
-  },
-  "peerDependencies": {
-    "maptalks": ">=0.26.3"
   },
   "dependencies": {}
 }

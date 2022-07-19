@@ -1,10 +1,7 @@
 /*!
- * maptalks.markercluster v0.8.3
+ * maptalks.markercluster v0.8.4
  * LICENSE : MIT
- * (c) 2016-2021 maptalks.org
- */
-/*!
- * requires maptalks@>=0.26.3 
+ * (c) 2016-2022 maptalks.org
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
@@ -696,6 +693,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.3, requires maptalks@>=0.26.3.');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.4');
 
 })));
