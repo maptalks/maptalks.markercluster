@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.8.5
+ * maptalks.markercluster v0.8.4
  * LICENSE : MIT
  * (c) 2016-2022 maptalks.org
  */
@@ -324,7 +324,17 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
         // if no clusters is hit, identify markers
         if (this._markersToDraw) {
-            return this.layer._hitGeos(this._markersToDraw, coordinate, options);
+            var point = map.coordinateToContainerPoint(coordinate)
+            var minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates))
+            var hitPoint = this._markersToDraw[0]
+            for(var i = 1; i < this._markersToDraw.length; i++) {
+                var dis = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[i]._coordinates))
+                if (minDistance > dis) {
+                    minDistance = dis
+                    hitPoint = this._markersToDraw[i]
+                }
+            }
+            return hitPoint;
         }
         return null;
     };
@@ -415,7 +425,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             var pgx = Math.floor((center.x - min.x) / r),
                 pgy = Math.floor((center.y - min.y) / r);
             var pkey = pgx + '_' + pgy;
-            var parent = _this5._clusterCache[z] ? _this5._clusterCache[z]['clusterMap'][pkey] : null;
+            var parent = _this5._clusterCache[z]['clusterMap'][pkey];
             if (parent) {
                 var pp = map._prjToContainerPoint(parent['center']);
                 pt = pp.add(pt.sub(pp)._multi(ratio));
@@ -693,6 +703,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.5');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.4');
 
 })));
