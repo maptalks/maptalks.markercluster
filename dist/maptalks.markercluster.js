@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.8.4
+ * maptalks.markercluster v0.8.5
  * LICENSE : MIT
  * (c) 2016-2022 maptalks.org
  */
@@ -425,7 +425,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
             var pgx = Math.floor((center.x - min.x) / r),
                 pgy = Math.floor((center.y - min.y) / r);
             var pkey = pgx + '_' + pgy;
-            var parent = _this5._clusterCache[z]['clusterMap'][pkey];
+            var parent = _this5._clusterCache[z] ? _this5._clusterCache[z]['clusterMap'][pkey] : null;
             if (parent) {
                 var pp = map._prjToContainerPoint(parent['center']);
                 pt = pp.add(pt.sub(pp)._multi(ratio));
@@ -703,6 +703,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.4');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.5');
 
 })));
