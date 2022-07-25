@@ -324,7 +324,17 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
         // if no clusters is hit, identify markers
         if (this._markersToDraw) {
-            return this.layer._hitGeos(this._markersToDraw, coordinate, options);
+            var point = map.coordinateToContainerPoint(coordinate)
+            var minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates))
+            var hitPoint = this._markersToDraw[0]
+            for(var i = 1; i < this._markersToDraw.length; i++) {
+                var dis = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[i]._coordinates))
+                if (minDistance > dis) {
+                    minDistance = dis
+                    hitPoint = this._markersToDraw[i]
+                }
+            }
+            return hitPoint;
         }
         return null;
     };
