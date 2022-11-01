@@ -42,7 +42,7 @@
     "maptalks": ">=0.26.3",
     "maptalks-build-helpers": "^0.4.4",
     "minimist": "^1.2.0",
-    "mocha": "^2.4.5",
+    "mocha": "^10.1.0",
     "natives": "^1.1.6",
     "rollup-plugin-babel": "^3.0.6"
   },
