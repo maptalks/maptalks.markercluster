@@ -291,14 +291,14 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
 
         // if no clusters is hit, identify markers
         if (this._markersToDraw) {
-            var point = map.coordinateToContainerPoint(coordinate)
-            var minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates))
-            var hitPoint = this._markersToDraw[0]
-            for(var i = 1; i < this._markersToDraw.length; i++) {
-                var dis = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[i]._coordinates))
+            const point = map.coordinateToContainerPoint(coordinate);
+            let minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates));
+            let hitPoint = this._markersToDraw[0];
+            for (let i = 1; i < this._markersToDraw.length; i++) {
+                const dis = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[i]._coordinates));
                 if (minDistance > dis) {
-                    minDistance = dis
-                    hitPoint = this._markersToDraw[i]
+                    minDistance = dis;
+                    hitPoint = this._markersToDraw[i];
                 }
             }
             return hitPoint;
