@@ -1,7 +1,7 @@
 /*!
- * maptalks.markercluster v0.8.5
+ * maptalks.markercluster v0.8.6
  * LICENSE : MIT
- * (c) 2016-2022 maptalks.org
+ * (c) 2016-2024 maptalks.org
  */
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('maptalks')) :
@@ -256,6 +256,13 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         _maptalks$renderer$Ve.prototype.drawOnInteracting.apply(this, arguments);
     };
 
+    _class.prototype._getCurrentNeedRenderGeos = function _getCurrentNeedRenderGeos() {
+        if (this._markersToDraw) {
+            return this._markersToDraw;
+        }
+        return [];
+    };
+
     _class.prototype.forEachGeo = function forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach(function (g) {
@@ -324,14 +331,14 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
 
         // if no clusters is hit, identify markers
         if (this._markersToDraw) {
-            var point = map.coordinateToContainerPoint(coordinate)
-            var minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates))
-            var hitPoint = this._markersToDraw[0]
-            for(var i = 1; i < this._markersToDraw.length; i++) {
-                var dis = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[i]._coordinates))
+            var _point = map.coordinateToContainerPoint(coordinate);
+            var minDistance = _point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates));
+            var hitPoint = this._markersToDraw[0];
+            for (var _i = 1; _i < this._markersToDraw.length; _i++) {
+                var dis = _point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[_i]._coordinates));
                 if (minDistance > dis) {
-                    minDistance = dis
-                    hitPoint = this._markersToDraw[i]
+                    minDistance = dis;
+                    hitPoint = this._markersToDraw[_i];
                 }
             }
             return hitPoint;
@@ -703,6 +710,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.5');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.6');
 
 })));
