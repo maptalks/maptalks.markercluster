@@ -216,6 +216,13 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         super.drawOnInteracting.apply(this, arguments);
     }
 
+    _getCurrentNeedRenderGeos() {
+        if (this._markersToDraw) {
+            return this._markersToDraw;
+        }
+        return [];
+    }
+
     forEachGeo(fn, context) {
         if (this._markersToDraw) {
             this._markersToDraw.forEach((g) => {
