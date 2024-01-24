@@ -290,7 +290,7 @@ ClusterLayer.registerRenderer('canvas', class extends maptalks.renderer.VectorLa
         }
 
         // if no clusters is hit, identify markers
-        if (this._markersToDraw) {
+        if (this._markersToDraw && this._markersToDraw[0]) {
             const point = map.coordinateToContainerPoint(coordinate);
             let minDistance = point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates));
             let hitPoint = this._markersToDraw[0];
