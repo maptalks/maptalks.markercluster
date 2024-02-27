@@ -1,5 +1,5 @@
 /*!
- * maptalks.markercluster v0.8.7
+ * maptalks.markercluster v0.8.8
  * LICENSE : MIT
  * (c) 2016-2024 maptalks.org
  */
@@ -332,16 +332,7 @@ ClusterLayer.registerRenderer('canvas', function (_maptalks$renderer$Ve) {
         // if no clusters is hit, identify markers
         if (this._markersToDraw && this._markersToDraw[0]) {
             var _point = map.coordinateToContainerPoint(coordinate);
-            var minDistance = _point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[0]._coordinates));
-            var hitPoint = this._markersToDraw[0];
-            for (var _i = 1; _i < this._markersToDraw.length; _i++) {
-                var dis = _point.distanceTo(map.coordinateToContainerPoint(this._markersToDraw[_i]._coordinates));
-                if (minDistance > dis) {
-                    minDistance = dis;
-                    hitPoint = this._markersToDraw[_i];
-                }
-            }
-            return hitPoint;
+            return this.layer._hitGeos(this._markersToDraw, _point, options);
         }
         return null;
     };
@@ -710,6 +701,6 @@ exports.ClusterLayer = ClusterLayer;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.7');
+typeof console !== 'undefined' && console.log('maptalks.markercluster v0.8.8');
 
 })));
