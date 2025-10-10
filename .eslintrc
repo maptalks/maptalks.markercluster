@@ -4,20 +4,16 @@
     "browser": true,
     "es6": true
   },
-  "parser": "babel-eslint",
+  "extends": "eslint:recommended",
+  "parser": "@babel/eslint-parser",
   "parserOptions": {
     "sourceType": "module"
   },
-  "extends": "maptalks",
   "globals": {
   },
   "rules": {
-    "object-curly-spacing": [2, "always", { "objectsInObjects": false }],
-    "new-cap": 0,
-    "key-spacing": 0,
-    "strict": 0,
-    "global-require": 0,
     "no-var" : "error",
-    "prefer-const": "error"
+    "prefer-const": "error",
+    "no-undef": 0
   }
 }

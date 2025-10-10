@@ -2,9 +2,13 @@
 <html>
 <head>
     <title>maptalks.markercluster demo</title>
-    <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks/dist/maptalks.css">
-    <script type="text/javascript" src="https://unpkg.com/maptalks.markercluster/dist/maptalks.markercluster.js"></script>
+    <!-- <script type="text/javascript" src="/maptalks/dist/maptalks.js"></script> -->
+    <!-- <script type="text/javascript" src="https://unpkg.com/maptalks-gl/dist/maptalks-gl.js"></script> -->
+     <script type="text/javascript" src="/maptalks/dist/maptalks.js"></script>
+     <script type="text/javascript" src="/maptalksgl/dist/maptalksgl.js"></script>
+     <script type="text/javascript" src="/gl/packages/vt/dist/maptalks.vt.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/maptalks-gl/dist/maptalks-gl.css">
+    <script type="text/javascript" src="../dist/maptalks.markercluster.js"></script>
     <script type="text/javascript" src="realworld.50000.1.js"></script>
     <script type="text/javascript" src="realworld.50000.2.js"></script>
     <style>
@@ -29,11 +33,12 @@
         center:   [175.27, -37.79],
         zoom   :  14,
         centerCross : true,
-        baseLayer : new maptalks.TileLayer('tile',{
-          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-          subdomains: ['a','b','c','d'],
-          attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-        })
+        renderer: 'gl',
+        // baseLayer : new maptalks.TileLayer('tile',{
+        //   urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+        //   subdomains: ['a','b','c','d'],
+        //   attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+        // })
     });
 
     var markers = [];
@@ -51,6 +56,8 @@
     var clusterLayer = new maptalks.ClusterLayer('cluster', markers, {
         'noClusterWithOneMarker' : false,
         'maxClusterZoom' : 18,
+        // 'animation': false,
+        // renderer: 'canvas',
         //"count" is an internal variable: marker count in the cluster.
         'symbol': {
             'markerType' : 'ellipse',
@@ -70,7 +77,8 @@
     map.addLayer(clusterLayer);
 
     map.on('click', function (e) {
-        console.log(clusterLayer.identify(e.coordinate));
+        // console.log(clusterLayer.identify(e.coordinate));
+        console.log(e);
     });
 
     function onClick(e) {
