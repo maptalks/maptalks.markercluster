@@ -350,7 +350,6 @@ const ClusterLayerRenderable = function(Base) {
         _drawLayer(clusters) {
             const parentClusters = this._currentClusters || clusters;
             this._currentClusters = clusters;
-            delete this._clusterMaskExtent;
             const layer = this.layer;
             //if (layer.options['animation'] && this._animated && this._inout === 'out') {
             if (layer.options['animation'] && this._animated && this._inout) {
@@ -391,7 +390,7 @@ const ClusterLayerRenderable = function(Base) {
         }
 
         drawClustersFrame(parentClusters, toClusters, ratio) {
-            this._clusterMaskExtent = this.prepareCanvas();
+            this.prepareCanvas();
             const map = this.getMap(),
                 drawn = {};
             if (parentClusters) {
@@ -428,7 +427,7 @@ const ClusterLayerRenderable = function(Base) {
             if (!clusters) {
                 return;
             }
-            this._clusterMaskExtent = this.prepareCanvas();
+            this.prepareCanvas();
             const map = this.getMap();
             clusters.forEach(c => {
                 const pt = map._prjToContainerPoint(c['center']);
@@ -448,7 +447,7 @@ const ClusterLayerRenderable = function(Base) {
             ctx.globalAlpha = opacity * op;
             if (sprite) {
                 const pos = pt.add(sprite.offset)._sub(sprite.canvas.width / 2, sprite.canvas.height / 2);
-                ctx.drawImage(sprite.canvas, pos.x, pos.y);
+                maptalks.Canvas.image(ctx, sprite.canvas, pos.x, pos.y);
             }
 
             if (this.layer.options['drawClusterText'] && cluster['textSize']) {
@@ -728,10 +727,6 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.bufferIndex = 0;
             this.opacityIndex = 0;
             this.textIndex = 0;
-            if (!this.clusterSprites) {
-                this.clusterSprites = {};
-                this.clusterTextSprites = {};
-            }
         }
 
         drawCluster(pt, cluster, opacity) {
@@ -844,7 +839,6 @@ if (typeof PointLayerRenderer !== 'undefined') {
         }
 
         _updateMesh() {
-            this._updateGeometryData();
 
             const isAtlasDirty = this.textureDirty;
             const atlas = this._genAtlas();
@@ -855,6 +849,8 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 const textAtlas = this._genTextAtlas();
                 this._updateTextTexCoord(textAtlas, isAtlasDirty);
             }
+
+            this._updateGeometryData();
         }
 
         addPoint(x, y, width, height, opacity, key) {
@@ -1107,7 +1103,6 @@ if (typeof PointLayerRenderer !== 'undefined') {
             if (!this.textTextureDirty) {
                 return this.textAtlas;
             }
-            console.log('texture atlas updated');
             const { IconAtlas, RGBAImage } = getVectorPacker();
             const texts = this.clusterTextSprites;
             const textMap = {};
