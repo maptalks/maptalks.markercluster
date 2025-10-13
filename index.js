@@ -5,6 +5,9 @@ import vert from './glsl/sprite.vert';
 import frag from './glsl/sprite.frag';
 
 const U8 = new Uint8Array(1);
+const FONT_CANVAS = document.createElement('canvas');
+const fontCtx = FONT_CANVAS.getContext('2d');
+const ZERO_POINT = new maptalks.Point(0, 0);
 
 const MarkerLayerClazz = maptalks.DrawToolLayer.markerLayerClazz;
 let renderer = 'canvas';
@@ -189,12 +192,12 @@ const ClusterLayerRenderable = function(Base) {
             }
             const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
 
-            const clusters = this._getClustersToDraw(zoomClusters);
+            const clusters = this.getClustersToDraw(zoomClusters);
             clusters.zoom = zoom;
             this._drawLayer(clusters);
         }
 
-        _getClustersToDraw(zoomClusters) {
+        getClustersToDraw(zoomClusters) {
             this._oldMarkersToDraw = this._markersToDraw || [];
             this._markersToDraw = [];
             const map = this.getMap();
@@ -203,6 +206,7 @@ const ClusterLayerRenderable = function(Base) {
             const extent = map.getContainerExtent(),
                 clusters = [];
             let pt, pExt, sprite, width, height, markerIndex = 0, isMarkerDirty = false;
+            const isCanvas = !this.device;
             for (const p in zoomClusters) {
                 this._currentGrid = zoomClusters[p];
                 if (zoomClusters[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
@@ -219,7 +223,7 @@ const ClusterLayerRenderable = function(Base) {
                 height = sprite.canvas.height;
                 pt = map._prjToContainerPoint(zoomClusters[p]['center']);
                 pExt = new maptalks.PointExtent(pt.sub(width, height), pt.add(width, height));
-                if (!extent.intersects(pExt)) {
+                if (isCanvas && !extent.intersects(pExt)) {
                     continue;
                 }
 
@@ -723,8 +727,10 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.pointCount = 0;
             this.bufferIndex = 0;
             this.opacityIndex = 0;
+            this.textIndex = 0;
             if (!this.clusterSprites) {
                 this.clusterSprites = {};
+                this.clusterTextSprites = {};
             }
         }
 
@@ -740,12 +746,69 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 this.textureDirty = true;
             }
             const pos = pt.add(sprite.offset)._sub(canvas.width / 2, canvas.height / 2);
-            const x = pos.x;
-            const y = pos.y;
+            let x = pos.x;
+            let y = pos.y;
             const map = this.getMap();
             const pixelRatio = map.getDevicePixelRatio();
             const height = map.height;
-            this.addPoint(x * pixelRatio, (height - y) * pixelRatio, sprite.data.width * pixelRatio, sprite.data.height * pixelRatio, opacity, key);
+            x = x * pixelRatio;
+            y = (height - y) * pixelRatio;
+            const spriteW = sprite.data.width * pixelRatio;
+            const spriteH = sprite.data.height * pixelRatio;
+
+            this.addPoint(x, y, spriteW, spriteH, opacity, key);
+
+            if (this.layer.options['drawClusterText']) {
+                maptalks.Canvas.prepareCanvasFont(fontCtx, this._textSymbol);
+                const fontKey = fontCtx.font + '-' + fontCtx.fillStyle;
+                const text = this._getClusterText(cluster);
+                const { sprite, key } = this._getTextSprite(text, fontKey);
+                if (!this.clusterTextSprites[key]) {
+                    this.clusterTextSprites[key] = sprite;
+                    this.textTextureDirty = true;
+                }
+                this.addTextPoint(x + spriteW / 2, y - spriteH / 2, sprite.data.width * pixelRatio, sprite.data.height * pixelRatio, key);
+            }
+            this.pointCount++;
+
+        }
+
+        _getTextSprite(text, fontKey) {
+            if (!this._textSpriteCache) {
+                this._textSpriteCache = {};
+            }
+            const key = fontKey + '-' + text;
+            if (!this._textSpriteCache[key]) {
+                const dpr = this.getMap().getDevicePixelRatio();
+                const metrics = fontCtx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+                const canvas = document.createElement('canvas');
+                canvas.width = textWidth * dpr;
+                canvas.height = textHeight * dpr;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.scale(dpr, dpr);
+                maptalks.Canvas.prepareCanvasFont(ctx, this._textSymbol);
+                ctx.textBaseline = 'top';
+                ctx.fillText(text, 0, 0);
+                const debugCanvas = document.getElementById('debug-text-sprite');
+                if (debugCanvas) {
+                    debugCanvas.width = canvas.width;
+                    debugCanvas.height = canvas.height;
+                    const ctx = debugCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0);
+                }
+
+                this._textSpriteCache[key] = {
+                    canvas,
+                    offset: ZERO_POINT,
+                    data: ctx.getImageData(0, 0, canvas.width, canvas.height)
+                };
+            }
+            return {
+                sprite: this._textSpriteCache[key],
+                key
+            };
         }
 
         drawMarkers() {
@@ -763,17 +826,35 @@ if (typeof PointLayerRenderer !== 'undefined') {
             const fbo = parentContext && parentContext.renderTarget && context.renderTarget.fbo;
             this._clusterGeometry.setDrawCount(this.pointCount * 6);
             const { width, height } = this.canvas;
-            let layerOpacity = this.layer && this.layer.options['opacity'];
-            if (maptalks.Util.isNil(layerOpacity)) {
-                layerOpacity = 1;
+            const layerOpacity = this._getLayerOpacity();
+            const uniforms = {
+                resolution: [width, height],
+                layerOpacity,
+                dxDy: [0, 0]
+            };
+            this._renderer.render(this._spriteShader, uniforms, this._scene, fbo);
+
+            if (this.layer.options['drawClusterText']) {
+                this._textGeometry.setDrawCount(this.pointCount * 6);
+                const dx = this._textSymbol['textDx'] || 0;
+                const dy = this._textSymbol['textDy'] || 0;
+                uniforms.dxDy = [dx, dy];
+                this._renderer.render(this._spriteShader, uniforms, this._textScene, fbo);
             }
-            this._renderer.render(this._spriteShader, { resolution: [width, height], layerOpacity }, this._scene, fbo);
         }
 
         _updateMesh() {
-            const atlas = this._genAtlas();
-            this._updateTexCoord(atlas);
             this._updateGeometryData();
+
+            const isAtlasDirty = this.textureDirty;
+            const atlas = this._genAtlas();
+            this._updateTexCoord(atlas, isAtlasDirty);
+            // text
+            if (this.layer.options['drawClusterText']) {
+                const isAtlasDirty = this.textTextureDirty;
+                const textAtlas = this._genTextAtlas();
+                this._updateTextTexCoord(textAtlas, isAtlasDirty);
+            }
         }
 
         addPoint(x, y, width, height, opacity, key) {
@@ -791,38 +872,75 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 this.sprites[this.pointCount] = key;
                 this.sprites.dirty = true;
             }
-
-            this.pointCount++;
         }
 
         addVertex(x, y, opacity) {
-            if (this.positionBufferData[this.bufferIndex] !== x) {
-                this.positionBufferData[this.bufferIndex] = x;
-                this.positionBufferData.dirty = true;
+            const positionBufferData = this.positionBufferData;
+            if (positionBufferData[this.bufferIndex] !== x) {
+                positionBufferData[this.bufferIndex] = x;
+                positionBufferData.dirty = true;
             }
             this.bufferIndex++;
-            if (this.positionBufferData[this.bufferIndex] !== y) {
-                this.positionBufferData[this.bufferIndex] = y;
-                this.positionBufferData.dirty = true;
+            if (positionBufferData[this.bufferIndex] !== y) {
+                positionBufferData[this.bufferIndex] = y;
+                positionBufferData.dirty = true;
             }
             this.bufferIndex++;
 
+            const opacityBufferData = this.opacityBufferData;
             opacity *= 255;
             U8[0] = opacity;
-            if (this.opacityBufferData[this.opacityIndex] !== U8[0]) {
-                this.opacityBufferData[this.opacityIndex] = U8[0];
-                this.opacityBufferData.dirty = true;
+            if (opacityBufferData[this.opacityIndex] !== U8[0]) {
+                opacityBufferData[this.opacityIndex] = U8[0];
+                opacityBufferData.dirty = true;
             }
             this.opacityIndex++;
+        }
+
+        addTextPoint(x, y, width, height, key) {
+            this._check();
+            const dpr = this.getMap().getDevicePixelRatio();
+            width /= dpr;
+            height /= dpr;
+            const w = width / 2;
+            const h = height / 2;
+
+            this.addTextVertex(x - w, y - h);
+            this.addTextVertex(x + w, y - h);
+            this.addTextVertex(x - w, y + h);
+            this.addTextVertex(x - w, y + h);
+            this.addTextVertex(x + w, y - h);
+            this.addTextVertex(x + w, y + h);
+
+            if (this.textSprites[this.pointCount] !== key) {
+                this.textSprites[this.pointCount] = key;
+                this.textSprites.dirty = true;
+            }
+        }
+
+        addTextVertex(x, y) {
+            const textPositionData = this.textPositionData;
+            if (textPositionData[this.textIndex] !== x) {
+                textPositionData[this.textIndex] = x;
+                textPositionData.dirty = true;
+            }
+            this.textIndex++;
+            if (textPositionData[this.textIndex] !== y) {
+                textPositionData[this.textIndex] = y;
+                textPositionData.dirty = true;
+            }
+            this.textIndex++;
         }
 
         _check() {
             if (this.pointCount >= this.maxPointCount - 1) {
                 this.maxPointCount += 1024;
-                const { positionBufferData, texCoordBufferData, opacityBufferData } = this._initBuffers();
+                const { positionBufferData, texCoordBufferData, opacityBufferData, textPositionData, textTexCoordData } = this._initBuffers();
                 for (let i = 0; i < this.bufferIndex; i++) {
                     positionBufferData[i] = this.positionBufferData[i];
                     texCoordBufferData[i] = this.texCoordBufferData[i];
+                    textPositionData[i] = this.textPositionData[i];
+                    textTexCoordData[i] = this.textTexCoordData[i];
                 }
                 for (let i = 0; i < this.opacityIndex; i++) {
                     opacityBufferData[i] = this.opacityBufferData[i];
@@ -830,10 +948,13 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 this.positionBufferData = positionBufferData;
                 this.texCoordBufferData = texCoordBufferData;
                 this.opacityBufferData = opacityBufferData;
+                this.textPositionData = textPositionData;
+                this.textTexCoordData = textTexCoordData;
             }
         }
 
         _updateGeometryData() {
+            // icon
             if (this.positionBufferData.dirty) {
                 this._clusterGeometry.updateData('aPosition', this.positionBufferData);
                 // console.log(this.positionBufferData);
@@ -841,16 +962,27 @@ if (typeof PointLayerRenderer !== 'undefined') {
             }
             if (this.opacityBufferData.dirty) {
                 this._clusterGeometry.updateData('aOpacity', this.opacityBufferData);
+                this._textGeometry.updateData('aOpacity', this.opacityBufferData);
                 this.opacityBufferData.dirty = false;
             }
             if (this.texCoordBufferData.dirty) {
                 this._clusterGeometry.updateData('aTexCoord', this.texCoordBufferData);
                 this.texCoordBufferData.dirty = false;
             }
+
+            // text
+            if (this.textPositionData.dirty) {
+                this._textGeometry.updateData('aPosition', this.textPositionData);
+                this.textPositionData.dirty = false;
+            }
+            if (this.textTexCoordData.dirty) {
+                this._textGeometry.updateData('aTexCoord', this.textTexCoordData);
+                this.textTexCoordData.dirty = false;
+            }
         }
 
-        _updateTexCoord(atlas) {
-            if (!this.sprites.dirty) {
+        _updateTexCoord(atlas, isAtlasDirty) {
+            if (!this.sprites.dirty && !isAtlasDirty) {
                 return;
             }
             const { positions, image } = atlas;
@@ -861,8 +993,22 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 const { tl, br } = bin;
                 this._fillTexCoord(tl, br, width, height);
             }
-            this._initTexture(image.data, width, height);
             this.sprites.dirty = false;
+        }
+
+        _updateTextTexCoord(atlas, isAtlasDirty) {
+            if (!this.textSprites.dirty && !isAtlasDirty) {
+                return;
+            }
+            const { positions, image } = atlas;
+            const { width, height } = image;
+            this.textTexCoordIndex = 0;
+            for (let i = 0; i < this.pointCount; i++) {
+                const bin = positions[this.textSprites[i]];
+                const { tl, br } = bin;
+                this._fillTextTexCoord(tl, br, width, height);
+            }
+            this.textSprites.dirty = false;
         }
 
         _initTexture(data, width, height) {
@@ -883,14 +1029,35 @@ if (typeof PointLayerRenderer !== 'undefined') {
             } else {
                 this._clusterTexture = this.device.texture(config);
             }
-            this._clusterMesh.setUniform('spriteTexture', this._clusterTexture);
+            this._clusterMesh.setUniform('sourceTexture', this._clusterTexture);
+        }
+
+        _initTextTexture(data, width, height) {
+            const config = {
+                data,
+                width,
+                height,
+                mag: 'linear',
+                min: 'linear',
+                premultiplyAlpha: true
+            };
+            if (this._textTexture) {
+                if (this._textTexture.update) {
+                    this._textTexture.update(config);
+                } else {
+                    this._textTexture(config);
+                }
+            } else {
+                this._textTexture = this.device.texture(config);
+            }
+            this._textMesh.setUniform('sourceTexture', this._textTexture);
         }
 
         _fillTexCoord(tl, br, texWidth, texHeight) {
             const u1 = tl[0] / texWidth;
-            const v1 = tl[1] / texHeight;
+            const v1 = br[1] / texHeight;
             const u2 = br[0] / texWidth;
-            const v2 = br[1] / texHeight;
+            const v2 = tl[1] / texHeight;
 
             this.addVertexTexCoord(u1, v1);
             this.addVertexTexCoord(u2, v1);
@@ -898,6 +1065,20 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.addVertexTexCoord(u1, v2);
             this.addVertexTexCoord(u2, v1);
             this.addVertexTexCoord(u2, v2);
+        }
+
+        _fillTextTexCoord(tl, br, texWidth, texHeight) {
+            const u1 = tl[0] / texWidth;
+            const v1 = br[1] / texHeight;
+            const u2 = br[0] / texWidth;
+            const v2 = tl[1] / texHeight;
+
+            this.addTextTexCoord(u1, v1);
+            this.addTextTexCoord(u2, v1);
+            this.addTextTexCoord(u1, v2);
+            this.addTextTexCoord(u1, v2);
+            this.addTextTexCoord(u2, v1);
+            this.addTextTexCoord(u2, v2);
         }
 
         _genAtlas() {
@@ -913,22 +1094,73 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 const image = new RGBAImage({ width, height }, data);
                 iconMap[url] = { data: image, pixelRatio: 1 };
             }
-            this.atlas = new IconAtlas(iconMap);
+            const isWebGL1 = this.gl && (this.gl instanceof WebGLRenderingContext);
+            this.atlas = new IconAtlas(iconMap, { nonPowerOfTwo: !isWebGL1 });
             this.textureDirty = false;
+            const { image } = this.atlas;
+            const { width, height } = image;
+            this._initTexture(image.data, width, height);
             return this.atlas;
         }
 
+        _genTextAtlas() {
+            if (!this.textTextureDirty) {
+                return this.textAtlas;
+            }
+            console.log('texture atlas updated');
+            const { IconAtlas, RGBAImage } = getVectorPacker();
+            const texts = this.clusterTextSprites;
+            const textMap = {};
+            for (const key in texts) {
+                const textSprite = texts[key];
+                const { width, height, data } = textSprite.data;
+                const image = new RGBAImage({ width, height }, data);
+                textMap[key] = { data: image, pixelRatio: 1 };
+            }
+            const isWebGL1 = this.gl && (this.gl instanceof WebGLRenderingContext);
+            this.textAtlas = new IconAtlas(textMap, { nonPowerOfTwo: !isWebGL1 });
+            const { image } = this.textAtlas;
+            const { width, height } = image;
+            this._initTextTexture(image.data, width, height);
+            this.textTextureDirty = false;
+
+            const debugCanvas = document.getElementById('debug-text-atlas');
+            if (debugCanvas) {
+                debugCanvas.width = width;
+                debugCanvas.height = height;
+                const ctx = debugCanvas.getContext('2d');
+                ctx.putImageData(new ImageData(new Uint8ClampedArray(image.data.buffer), width, height), 0, 0);
+            }
+
+            return this.textAtlas;
+        }
+
         addVertexTexCoord(u, v) {
-            if (this.texCoordBufferData[this.texCoordIndex] !== u) {
-                this.texCoordBufferData[this.texCoordIndex] = u;
-                this.texCoordBufferData.dirty = true;
+            const texCoordBufferData = this.texCoordBufferData;
+            if (texCoordBufferData[this.texCoordIndex] !== u) {
+                texCoordBufferData[this.texCoordIndex] = u;
+                texCoordBufferData.dirty = true;
             }
             this.texCoordIndex++;
-            if (this.texCoordBufferData[this.texCoordIndex] !== v) {
-                this.texCoordBufferData[this.texCoordIndex] = v;
-                this.texCoordBufferData.dirty = true;
+            if (texCoordBufferData[this.texCoordIndex] !== v) {
+                texCoordBufferData[this.texCoordIndex] = v;
+                texCoordBufferData.dirty = true;
             }
             this.texCoordIndex++;
+        }
+
+        addTextTexCoord(u, v) {
+            const textTexCoordData = this.textTexCoordData;
+            if (textTexCoordData[this.textTexCoordIndex] !== u) {
+                textTexCoordData[this.textTexCoordIndex] = u;
+                textTexCoordData.dirty = true;
+            }
+            this.textTexCoordIndex++;
+            if (textTexCoordData[this.textTexCoordIndex] !== v) {
+                textTexCoordData[this.textTexCoordIndex] = v;
+                textTexCoordData.dirty = true;
+            }
+            this.textTexCoordIndex++;
         }
 
         initContext() {
@@ -962,6 +1194,10 @@ if (typeof PointLayerRenderer !== 'undefined') {
             if (this._clusterTexture) {
                 this._clusterTexture.destroy();
                 delete this._clusterTexture;
+            }
+            if (this._textTexture) {
+                this._textTexture.destroy();
+                delete this._textTexture;
             }
             return super.onRemove();
         }
@@ -1003,12 +1239,20 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.maxPointCount = 1024;
             this.pointCount = 0;
             this.clusterSprites = {};
+            this.clusterTextSprites = {};
             this.sprites = [];
+            this.textSprites = [];
+            this.spriteCluster = [];
 
-            const { positionBufferData, texCoordBufferData, opacityBufferData } = this._initBuffers();
+            const {
+                positionBufferData, texCoordBufferData, opacityBufferData,
+                textPositionData, textTexCoordData
+            } = this._initBuffers();
             this.positionBufferData = positionBufferData;
             this.texCoordBufferData = texCoordBufferData;
             this.opacityBufferData = opacityBufferData;
+            this.textPositionData = textPositionData;
+            this.textTexCoordData = textTexCoordData;
 
             this._clusterGeometry = new reshader.Geometry({
                 aPosition: this.positionBufferData,
@@ -1020,6 +1264,18 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this._clusterGeometry.generateBuffers(this.device);
             this._clusterMesh = new reshader.Mesh(this._clusterGeometry);
             this._scene = new reshader.Scene([this._clusterMesh]);
+
+            this._textGeometry = new reshader.Geometry({
+                aPosition: this.textPositionData,
+                aTexCoord: this.textTexCoordData,
+                aOpacity: this.opacityBufferData
+            }, null, 0, {
+                positionSize: 2
+            });
+            this._textGeometry.generateBuffers(this.device);
+            this._textMesh = new reshader.Mesh(this._textGeometry);
+            this._textScene = new reshader.Scene([this._textMesh]);
+
             this._renderer = new reshader.Renderer(this.device);
         }
 
@@ -1033,7 +1289,18 @@ if (typeof PointLayerRenderer !== 'undefined') {
             const opacityBufferData = new Uint8Array(this.maxPointCount * opacitySize * 6);
             opacityBufferData.fill(255);
 
-            return { positionBufferData, texCoordBufferData, opacityBufferData };
+            const textPositionData = new Float32Array(this.maxPointCount * vertexSize * 6);
+            const textTexCoordData = new Float32Array(this.maxPointCount * texCoordSize * 6);
+
+            return { positionBufferData, texCoordBufferData, opacityBufferData, textPositionData, textTexCoordData };
+        }
+
+        _getLayerOpacity() {
+            let layerOpacity = this.layer && this.layer.options['opacity'];
+            if (maptalks.Util.isNil(layerOpacity)) {
+                layerOpacity = 1;
+            }
+            return layerOpacity;
         }
     }
     ClusterLayer.registerRenderer('gl', ClusterGLRenderer);
