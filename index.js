@@ -178,9 +178,7 @@ const ClusterLayerRenderable = function(Base) {
             const maxClusterZoom = this.layer.options['maxClusterZoom'];
             if (maxClusterZoom &&  zoom > maxClusterZoom) {
                 delete this._currentClusters;
-                const dirty = this._markersToDraw !== this.layer._geoList;
-                this._markersToDraw = this.layer._geoList;
-                this._markersToDraw.dirty = dirty;
+                this.checkMarksToDraw();
                 super.draw.apply(this, arguments);
                 return;
             }
@@ -197,8 +195,14 @@ const ClusterLayerRenderable = function(Base) {
             this._drawLayer(clusters);
         }
 
+        checkMarksToDraw() {
+            const dirty = this._markersToDraw !== this.layer._geoList;
+            this._markersToDraw = this.layer._geoList;
+            this._markersToDraw.dirty = dirty;
+        }
+
         getClustersToDraw(zoomClusters) {
-            this._oldMarkersToDraw = this._markersToDraw || [];
+            const oldMarkersToDraw = this._markersToDraw || [];
             this._markersToDraw = [];
             const map = this.getMap();
             const font = maptalks.StringUtil.getFont(this._textSymbol),
@@ -206,13 +210,12 @@ const ClusterLayerRenderable = function(Base) {
             const extent = map.getContainerExtent(),
                 clusters = [];
             let pt, pExt, sprite, width, height, markerIndex = 0, isMarkerDirty = false;
-            const isCanvas = !this.device;
             for (const p in zoomClusters) {
                 this._currentGrid = zoomClusters[p];
                 if (zoomClusters[p]['count'] === 1 && this.layer.options['noClusterWithOneMarker']) {
                     const marker = zoomClusters[p]['children'][0];
                     marker._cluster = zoomClusters[p];
-                    if (!isMarkerDirty && this._oldMarkersToDraw[markerIndex++] !== marker) {
+                    if (!isMarkerDirty && oldMarkersToDraw[markerIndex++] !== marker) {
                         isMarkerDirty = true;
                     }
                     this._markersToDraw.push(marker);
@@ -223,28 +226,27 @@ const ClusterLayerRenderable = function(Base) {
                 height = sprite.canvas.height;
                 pt = map._prjToContainerPoint(zoomClusters[p]['center']);
                 pExt = new maptalks.PointExtent(pt.sub(width, height), pt.add(width, height));
-                if (isCanvas && !extent.intersects(pExt)) {
+                if (!extent.intersects(pExt)) {
                     continue;
                 }
-
                 if (!zoomClusters[p]['textSize']) {
                     const text = this._getClusterText(zoomClusters[p]);
                     zoomClusters[p]['textSize'] = new maptalks.Point(digitLen.x * text.length, digitLen.y)._multi(1 / 2);
                 }
                 clusters.push(zoomClusters[p]);
             }
-            if (this._oldMarkersToDraw.length !== this._markersToDraw.length) {
+            if (oldMarkersToDraw.length !== this._markersToDraw.length) {
                 isMarkerDirty = true;
             }
             this._markersToDraw.dirty = isMarkerDirty;
             return clusters;
         }
 
-        drawOnInteracting() {
+        drawOnInteracting(...args) {
             if (this._currentClusters) {
                 this.drawClusters(this._currentClusters, 1);
             }
-            super.drawOnInteracting.apply(this, arguments);
+            super.drawOnInteracting(...args);
         }
 
         getCurrentNeedRenderGeos() {
@@ -470,7 +472,7 @@ const ClusterLayerRenderable = function(Base) {
             if (!this._spriteCache) {
                 this._spriteCache = {};
             }
-            const key = maptalks.Util.getSymbolStamp(this._symbol);
+            const key = getSymbolStamp(this._symbol);
             if (!this._spriteCache[key]) {
                 this._spriteCache[key] = new maptalks.Marker([0, 0], { 'symbol' : this._symbol })._getSprite(this.resources, this.getMap().CanvasClass);
             }
@@ -701,12 +703,12 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.init();
         }
 
-        drawOnInteracting() {
+        drawOnInteracting(event, timestamp, parentContext) {
             if (this._currentClusters) {
                 this.drawClusters(this._currentClusters, 1);
             }
             this.drawMarkers();
-            this.completeRender();
+            PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
         }
 
         drawClusters(...args) {
@@ -804,6 +806,11 @@ if (typeof PointLayerRenderer !== 'undefined') {
                 sprite: this._textSpriteCache[key],
                 key
             };
+        }
+
+        checkMarksToDraw() {
+            super.checkMarksToDraw();
+            this.drawMarkers();
         }
 
         drawMarkers() {
@@ -1301,3 +1308,13 @@ if (typeof PointLayerRenderer !== 'undefined') {
     ClusterLayer.registerRenderer('gl', ClusterGLRenderer);
 }
 
+function getSymbolStamp(symbol) {
+    const values = [];
+    for (const p in symbol) {
+        if (p[0] === '_') {
+            continue;
+        }
+        values.push(symbol[p]);
+    }
+    return values.join('|');
+}
