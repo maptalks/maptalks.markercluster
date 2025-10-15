@@ -24,6 +24,8 @@
     </style>
 </head>
 <body>
+<!-- <canvas id="debug-text-atlas"></canvas>
+ <canvas id="debug-text-sprite"></canvas> -->
 <div id="map"></div>
 <script type="text/javascript" >
     //This demos is inspired by Leaflet.MarkerCluster
@@ -34,11 +36,11 @@
         zoom   :  14,
         centerCross : true,
         renderer: 'gl',
-        // baseLayer : new maptalks.TileLayer('tile',{
-        //   urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-        //   subdomains: ['a','b','c','d'],
-        //   attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-        // })
+        baseLayer : new maptalks.TileLayer('tile',{
+          urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          subdomains: ['a','b','c','d'],
+          attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
+        })
     });
 
     var markers = [];
@@ -56,6 +58,7 @@
     var clusterLayer = new maptalks.ClusterLayer('cluster', markers, {
         'noClusterWithOneMarker' : false,
         'maxClusterZoom' : 18,
+        // 'drawClusterText': false,
         // 'animation': false,
         // renderer: 'canvas',
         //"count" is an internal variable: marker count in the cluster.
@@ -69,7 +72,6 @@
             'markerWidth' : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] },
             'markerHeight' : { property:'count', type:'interval', stops: [[0, 40], [9, 60], [99, 80]] }
         },
-        'drawClusterText': true,
         'geometryEvents' : true,
         'single': true
     });

@@ -3,6 +3,8 @@ import { reshader } from '@maptalks/gl';
 import { getVectorPacker, PointLayerRenderer } from '@maptalks/vt';
 import vert from './glsl/sprite.vert';
 import frag from './glsl/sprite.frag';
+import wgslVert from './wgsl/sprite_vert.wgsl';
+import wgslFrag from './wgsl/sprite_frag.wgsl';
 
 const U8 = new Uint8Array(1);
 const FONT_CANVAS = document.createElement('canvas');
@@ -148,7 +150,6 @@ const defaultSymbol = {
 const ClusterLayerRenderable = function(Base) {
     const renderable = class extends Base {
         init() {
-            this._animated = true;
             this._refreshStyle();
             this._clusterNeedRedraw = true;
         }
@@ -186,13 +187,53 @@ const ClusterLayerRenderable = function(Base) {
                 this._clearDataCache();
                 this._computeGrid();
                 this._clusterNeedRedraw = false;
-                this.clearContext();
             }
-            const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
+            let clusters;
+            if (this._triggerAnimate) {
+                this._startAnimation(zoom);
+            }
+            if (this._animateDelta) {
+                clusters = this._animateClusters;
+            } else {
+                const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
+                clusters = this.getClustersToDraw(zoomClusters);
+                clusters.zoom = zoom;
+            }
+            this._drawLayer(clusters);
+        }
 
+        _startAnimation(zoom) {
+            const zoomClusters = this._clusterCache[zoom] ? this._clusterCache[zoom]['clusters'] : null;
             const clusters = this.getClustersToDraw(zoomClusters);
             clusters.zoom = zoom;
-            this._drawLayer(clusters);
+
+            this._animateClusters = clusters;
+            this._parentClusters = this._currentClusters || clusters;
+            const layer = this.layer;
+            if (layer.options['animation'] && this._triggerAnimate) {
+                let dr = [0, 1];
+                if (this._inout === 'in') {
+                    dr = [1, 0];
+                }
+                this._animateDelta = dr[0];
+                this._player = maptalks.animation.Animation.animate(
+                    { 'd' : dr },
+                    { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
+                    frame => {
+                        this._animateDelta = frame.styles.d;
+                        if (frame.state.playState === 'finished') {
+                            delete this._animateDelta;
+                            delete this._inout;
+                            delete this._animateClusters;
+                            delete this._parentClusters
+                        }
+                        this.setToRedraw();
+                    }
+                )
+                .play();
+                this.setToRedraw();
+            }
+            this._triggerAnimate = false;
         }
 
         checkMarksToDraw() {
@@ -350,41 +391,18 @@ const ClusterLayerRenderable = function(Base) {
         }
 
         _drawLayer(clusters) {
-            const parentClusters = this._currentClusters || clusters;
             this._currentClusters = clusters;
-            const layer = this.layer;
-            //if (layer.options['animation'] && this._animated && this._inout === 'out') {
-            if (layer.options['animation'] && this._animated && this._inout) {
-                let dr = [0, 1];
+            if (this._animateDelta >= 0) {
                 if (this._inout === 'in') {
-                    dr = [1, 0];
+                    this.drawClustersFrame(clusters, this._parentClusters, this._animateDelta);
+                } else {
+                    this.drawClustersFrame(this._parentClusters, clusters, this._animateDelta);
                 }
-                this._player = maptalks.animation.Animation.animate(
-                    { 'd' : dr },
-                    { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
-                    frame => {
-                        if (frame.state.playState === 'finished') {
-                            this._animated = false;
-                            this.drawClusters(clusters, 1);
-                            this.drawMarkers();
-                            this.completeRender();
-                        } else {
-                            if (this._inout === 'in') {
-                                this.drawClustersFrame(clusters, parentClusters, frame.styles.d);
-                            } else {
-                                this.drawClustersFrame(parentClusters, clusters, frame.styles.d);
-                            }
-                            this.setCanvasUpdated();
-                        }
-                    }
-                )
-                .play();
             } else {
-                this._animated = false;
                 this.drawClusters(clusters, 1);
-                this.drawMarkers();
-                this.completeRender();
             }
+            this.drawMarkers();
+            this.completeRender();
         }
 
         drawMarkers() {
@@ -670,7 +688,7 @@ const ClusterLayerRenderable = function(Base) {
                 return;
             }
             this._inout = param['from'] > param['to'] ? 'in' : 'out';
-            this._animated = true;
+            this._triggerAnimate = true;
             this._computeGrid();
             super.onZoomEnd.apply(this, arguments);
         }
@@ -724,7 +742,6 @@ if (typeof PointLayerRenderer !== 'undefined') {
         }
 
         _clearToDraw() {
-            this.clearContext();
             this.pointCount = 0;
             this.bufferIndex = 0;
             this.opacityIndex = 0;
@@ -1233,6 +1250,8 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this._spriteShader = new reshader.MeshShader({
                 vert,
                 frag,
+                wgslVert,
+                wgslFrag,
                 extraCommandProps
             });
         }
