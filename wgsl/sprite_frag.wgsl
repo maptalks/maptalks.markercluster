@@ -15,4 +15,5 @@ struct MyAppUniforms {
 fn main(fragmentInput: FragmentInput) -> @location(0) vec4f {
   let color = textureSample(sourceTexture, sourceTextureSampler, fragmentInput.vTexCoord);
   return color * fragmentInput.vOpacity * uniforms.layerOpacity;
+    // return vec4f(1.0, 0.0, 0.0, 1.0);
 }

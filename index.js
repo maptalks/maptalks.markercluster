@@ -908,10 +908,10 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.bufferIndex++;
 
             const opacityBufferData = this.opacityBufferData;
-            opacity *= 255;
-            U8[0] = opacity;
-            if (opacityBufferData[this.opacityIndex] !== U8[0]) {
-                opacityBufferData[this.opacityIndex] = U8[0];
+            // opacity *= 255;
+            // U8[0] = opacity;
+            if (opacityBufferData[this.opacityIndex] !== opacity) {
+                opacityBufferData[this.opacityIndex] = opacity;
                 opacityBufferData.dirty = true;
             }
             this.opacityIndex++;
@@ -1248,6 +1248,7 @@ if (typeof PointLayerRenderer !== 'undefined') {
             };
 
             this._spriteShader = new reshader.MeshShader({
+                name: 'cluster-sprite',
                 vert,
                 frag,
                 wgslVert,
@@ -1307,8 +1308,8 @@ if (typeof PointLayerRenderer !== 'undefined') {
 
             const positionBufferData = new Float32Array(this.maxPointCount * vertexSize * 6);
             const texCoordBufferData = new Float32Array(this.maxPointCount * texCoordSize * 6);
-            const opacityBufferData = new Uint8Array(this.maxPointCount * opacitySize * 6);
-            opacityBufferData.fill(255);
+            const opacityBufferData = new Float32Array(this.maxPointCount * opacitySize * 6);
+            // opacityBufferData.fill(255);
 
             const textPositionData = new Float32Array(this.maxPointCount * vertexSize * 6);
             const textTexCoordData = new Float32Array(this.maxPointCount * texCoordSize * 6);

@@ -22,7 +22,7 @@ fn main(vertexInput: VertexInput) -> VertexOutput {
   var output: VertexOutput;
 
   output.vTexCoord = vertexInput.aTexCoord;
-  output.vOpacity = vertexInput.aOpacity / 255.0;
+  output.vOpacity = vertexInput.aOpacity;
 
   let position = (vertexInput.aPosition + uniforms.dxDy) / uniforms.resolution * 2.0 - 1.0;
   output.Position = vec4f(position, 0.0, 1.0);
