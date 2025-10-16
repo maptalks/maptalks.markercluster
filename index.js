@@ -6,7 +6,6 @@ import frag from './glsl/sprite.frag';
 import wgslVert from './wgsl/sprite_vert.wgsl';
 import wgslFrag from './wgsl/sprite_frag.wgsl';
 
-const U8 = new Uint8Array(1);
 const FONT_CANVAS = document.createElement('canvas');
 const fontCtx = FONT_CANVAS.getContext('2d');
 const ZERO_POINT = new maptalks.Point(0, 0);
