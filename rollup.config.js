@@ -34,7 +34,8 @@ function wgsl() {
                 .replace(/\n{2,}/g, '\n')); // # \n+ to \n;;
             transformedCode = `export default ${transformedCode};`;
             return {
-                code: transformedCode
+                code: transformedCode,
+                map: { mappings: '' }
             };
         }
     };

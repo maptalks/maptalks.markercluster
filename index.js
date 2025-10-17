@@ -1325,6 +1325,7 @@ if (typeof PointLayerRenderer !== 'undefined') {
         }
     }
     ClusterLayer.registerRenderer('gl', ClusterGLRenderer);
+    ClusterLayer.registerRenderer('gpu', ClusterGLRenderer);
 }
 
 function getSymbolStamp(symbol) {
