@@ -169,7 +169,7 @@ const ClusterLayerRenderable = function(Base) {
             return resources;
         }
 
-        draw() {
+        draw(timestamp, parentContext) {
             if (!this.canvas) {
                 this.prepareCanvas();
             }
@@ -198,7 +198,7 @@ const ClusterLayerRenderable = function(Base) {
                 clusters = this.getClustersToDraw(zoomClusters);
                 clusters.zoom = zoom;
             }
-            this._drawLayer(clusters);
+            this._drawLayer(clusters, timestamp, parentContext);
         }
 
         _startAnimation(zoom) {
@@ -389,7 +389,7 @@ const ClusterLayerRenderable = function(Base) {
             this._textSymbol = maptalks.MapboxUtil.loadFunctionTypes(textSymbol, argFn);
         }
 
-        _drawLayer(clusters) {
+        _drawLayer(clusters, timestamp, parentContext) {
             this._currentClusters = clusters;
             if (this._animateDelta >= 0) {
                 if (this._inout === 'in') {
@@ -400,7 +400,7 @@ const ClusterLayerRenderable = function(Base) {
             } else {
                 this.drawClusters(clusters, 1);
             }
-            this.drawMarkers();
+            this.drawMarkers(timestamp, parentContext);
             this.completeRender();
         }
 
@@ -724,8 +724,8 @@ if (typeof PointLayerRenderer !== 'undefined') {
             if (this._currentClusters) {
                 this.drawClusters(this._currentClusters, 1);
             }
-            this.drawMarkers();
-            PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
+            this.drawMarkers(timestamp, parentContext);
+            // PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
         }
 
         drawClusters(...args) {
@@ -826,14 +826,24 @@ if (typeof PointLayerRenderer !== 'undefined') {
 
         checkMarksToDraw() {
             super.checkMarksToDraw();
-            this.drawMarkers();
+            this._checkToRebuildGeometry();
         }
 
-        drawMarkers() {
-            if (this._markersToDraw.dirty) {
+        drawMarkers(timestamp, parentContext) {
+            this._checkToRebuildGeometry();
+            PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
+        }
+
+        _checkToRebuildGeometry() {
+            // only rebuild when not animating or interacting
+            if (this._markersToDraw.dirty && !this.isInteractingOrAnimating()) {
                 this.rebuildGeometries();
                 this._markersToDraw.dirty = false;
             }
+        }
+
+        isInteractingOrAnimating() {
+            return this.getMap().isInteracting() || this._animateDelta >= 0;
         }
 
         flush(parentContext) {
