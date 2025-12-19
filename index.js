@@ -848,7 +848,7 @@ if (typeof PointLayerRenderer !== 'undefined') {
         }
 
         isInteractingOrAnimating() {
-            return this.getMap().isInteracting() || this._animating;
+            return this.getMap().isZooming() || this._animating;
         }
 
         flush(parentContext) {
