@@ -55,6 +55,14 @@ export class ClusterLayer extends MarkerLayerClazz {
         return layer;
     }
 
+    getRendererOption() {
+        const mapRenderer = this.getMap().getRenderer();
+        if (!mapRenderer.isWebGL() && !mapRenderer.isWebGPU()) {
+            return 'canvas';
+        }
+        return super.getRendererOption();
+    }
+
     addMarker(markers) {
         return this.addGeometry(markers);
     }
