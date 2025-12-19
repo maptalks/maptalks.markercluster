@@ -215,6 +215,7 @@ const ClusterLayerRenderable = function(Base) {
                     dr = [1, 0];
                 }
                 this._animateDelta = dr[0];
+                this._animating = true;
                 this._player = maptalks.animation.Animation.animate(
                     { 'd' : dr },
                     { 'speed' : layer.options['animationDuration'], 'easing' : 'inAndOut' },
@@ -225,6 +226,7 @@ const ClusterLayerRenderable = function(Base) {
                             delete this._inout;
                             delete this._animateClusters;
                             delete this._parentClusters
+                            delete this._animating;
                         }
                         this.setToRedraw();
                     }
@@ -238,7 +240,7 @@ const ClusterLayerRenderable = function(Base) {
         checkMarksToDraw() {
             const dirty = this._markersToDraw !== this.layer._geoList;
             this._markersToDraw = this.layer._geoList;
-            this._markersToDraw.dirty = dirty;
+            this._isMarkersDirty = dirty;
         }
 
         getClustersToDraw(zoomClusters) {
@@ -278,7 +280,7 @@ const ClusterLayerRenderable = function(Base) {
             if (oldMarkersToDraw.length !== this._markersToDraw.length) {
                 isMarkerDirty = true;
             }
-            this._markersToDraw.dirty = isMarkerDirty;
+            this._isMarkersDirty = this._isMarkersDirty || isMarkerDirty;
             return clusters;
         }
 
@@ -831,19 +833,22 @@ if (typeof PointLayerRenderer !== 'undefined') {
 
         drawMarkers(timestamp, parentContext) {
             this._checkToRebuildGeometry();
-            PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
+            if (!this._animating) {
+                PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
+            }
+
         }
 
         _checkToRebuildGeometry() {
             // only rebuild when not animating or interacting
-            if (this._markersToDraw.dirty && !this.isInteractingOrAnimating()) {
+            if (this._isMarkersDirty && !this.isInteractingOrAnimating()) {
                 this.rebuildGeometries();
-                this._markersToDraw.dirty = false;
+                this._isMarkersDirty = false;
             }
         }
 
         isInteractingOrAnimating() {
-            return this.getMap().isInteracting() || this._animateDelta >= 0;
+            return this.getMap().isInteracting() || this._animating;
         }
 
         flush(parentContext) {
