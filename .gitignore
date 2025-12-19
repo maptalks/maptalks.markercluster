@@ -4,6 +4,7 @@
 *.gz
 .tern-port
 doc/
+dist/
 
 ### *tags
 GPATH
