@@ -1,6 +1,6 @@
 {
   "name": "maptalks.markercluster",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "A layer of maptalks to cluster markers.",
   "license": "MIT",
   "repository": {
