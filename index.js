@@ -55,13 +55,13 @@ export class ClusterLayer extends MarkerLayerClazz {
         return layer;
     }
 
-    getRendererOption() {
-        const mapRenderer = this.getMap().getRenderer();
-        if (!mapRenderer.isWebGL() && !mapRenderer.isWebGPU()) {
-            return 'canvas';
-        }
-        return super.getRendererOption();
-    }
+    // getRendererOption() {
+    //     const mapRenderer = this.getMap().getRenderer();
+    //     if (!mapRenderer.isWebGL() && !mapRenderer.isWebGPU()) {
+    //         return 'canvas';
+    //     }
+    //     return super.getRendererOption();
+    // }
 
     addMarker(markers) {
         return this.addGeometry(markers);
@@ -730,6 +730,13 @@ if (typeof PointLayerRenderer !== 'undefined') {
             this.init();
         }
 
+        clearContext() {
+            if (this._drawingMarkers) {
+                return;
+            }
+            return super.clearContext();
+        }
+
         drawOnInteracting(event, timestamp, parentContext) {
             if (this._currentClusters) {
                 this.drawClusters(this._currentClusters, 1);
@@ -840,10 +847,12 @@ if (typeof PointLayerRenderer !== 'undefined') {
         }
 
         drawMarkers(timestamp, parentContext) {
+            this._drawingMarkers = true;
             this._checkToRebuildGeometry();
             if (!this._animating) {
                 PointLayerRenderer.prototype.draw.call(this, timestamp, parentContext);
             }
+            this._drawingMarkers = false;
 
         }
 
