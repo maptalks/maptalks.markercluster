@@ -15,14 +15,14 @@ A plugin of [maptalks.js](https://github.com/maptalks/maptalks.js) to draw marke
   
 * Install with npm: ```npm install maptalks.markercluster```. 
 * Download from [dist directory](https://github.com/maptalks/maptalks.markercluster/tree/gh-pages/dist).
-* Use unpkg CDN: ```https://unpkg.com/maptalks.markercluster/dist/maptalks.markercluster.min.js```
+* Use unpkg CDN: ```https://unpkg.com/maptalks.markercluster/dist/maptalks.markercluster.js```
 
 ## Usage
 
 As a plugin, ```maptalks.markercluster``` must be loaded after ```maptalks.js``` in browsers.
 ```html
 <script type="text/javascript" src="https://unpkg.com/maptalks/dist/maptalks.min.js"></script>
-<script type="text/javascript" src="https://unpkg.com/maptalks.markercluster/dist/maptalks.markercluster.min.js"></script>
+<script type="text/javascript" src="https://unpkg.com/maptalks.markercluster/dist/maptalks.markercluster.js"></script>
 <script>
 var data = [marker1, marker2, marker3];
 var clusterLayer = new maptalks.ClusterLayer('cluster', data).addTo(map);
