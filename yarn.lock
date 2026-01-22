@@ -886,6 +886,23 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@mapbox/point-geometry@^0.1.0", "@mapbox/point-geometry@~0.1.0", "@mapbox/point-geometry@0.1.0":
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/@mapbox/point-geometry/-/point-geometry-0.1.0.tgz"
+  integrity sha512-6j56HdLTwWGO0fJPlrZtdU/B13q8Uwmo18Ck2GnGgN9PCFyKTZ3UbXeEdRFh18i9XQ92eH2VdtpJHpBD3aripQ==
+
+"@mapbox/shelf-pack@^3.1.0":
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/@mapbox/shelf-pack/-/shelf-pack-3.2.0.tgz"
+  integrity sha512-dyQxe6ukILV6qaEvxoKCIwhblgRjYp1ZGlClo4xvfbmxzFO5LYu7Tnrg2AZrRgN7VsSragsGcNjzUe9kCdKHYQ==
+
+"@mapbox/vector-tile@^1.3.1":
+  version "1.3.1"
+  resolved "https://registry.npmjs.org/@mapbox/vector-tile/-/vector-tile-1.3.1.tgz"
+  integrity sha512-MCEddb8u44/xfQ3oD+Srl/tNcQoqTw3goGk2oLsrFxOTc3dUp+kAnby3PvAeeBYSMSjSPD1nd1AJA6W49WnoUw==
+  dependencies:
+    "@mapbox/point-geometry" "~0.1.0"
+
 "@maptalks/feature-filter@^1.3.0":
   version "1.3.0"
   resolved "https://registry.npmjs.org/@maptalks/feature-filter/-/feature-filter-1.3.0.tgz"
@@ -898,20 +915,30 @@
   dependencies:
     colorin "^0.5.0"
 
-"@maptalks/fusiongl@0.10.1":
-  version "0.10.1"
-  resolved "https://registry.npmjs.org/@maptalks/fusiongl/-/fusiongl-0.10.1.tgz"
-  integrity sha512-xC0sEwvykiYHFu6cKZAFIU3wDa3M7fSXZj1UF18zt1v26J9iZ/v7btOXKavsLTn3h+++s3bPzK9U1VUzvdenvw==
+"@maptalks/fusiongl@0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/fusiongl/-/fusiongl-0.120.0.tgz"
+  integrity sha512-2Cj+23huR1WSD+Asau2iI+2uwh6iYgF0gQZRn4QwxcuOfz8h5EBnjXagjYB+EKujZz+1wbKdvoNvHjHW0rda4Q==
   dependencies:
     fast-deep-equal "^2.0.1"
 
-"@maptalks/gl@>=0.110.0":
-  version "0.110.0"
-  resolved "https://registry.npmjs.org/@maptalks/gl/-/gl-0.110.0.tgz"
-  integrity sha512-j5nsgeQetyDhQeRhTlO7Ibp/CunxULgfrBIcV3nTFpGpBD7AHjJTix5KsCFyip47070EFrbylwxR33Q+cTYYHQ==
+"@maptalks/geojson-bbox@^1.0.4":
+  version "1.0.5"
+  resolved "https://registry.npmjs.org/@maptalks/geojson-bbox/-/geojson-bbox-1.0.5.tgz"
+  integrity sha512-DLeXOssDHx1cWTMhAh3ZDSEv2mMEaEbYeX/4DrGzUMpYAzQHV86BGFymLvhyZ/K08vVImzeQ882aPiRWm0OXGQ==
+
+"@maptalks/geojson-vt@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.npmjs.org/@maptalks/geojson-vt/-/geojson-vt-3.5.0.tgz"
+  integrity sha512-7c/SXnGv6CSXimu7wFrYv3Tn+HO+P/hdV+bWihMqDcN1ln/SS75jPgrR8cXXSsPGOY1Q8JnvbV1KrpHTRrZyww==
+
+"@maptalks/gl@^0.120.0", "@maptalks/gl@0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/gl/-/gl-0.120.0.tgz"
+  integrity sha512-Jwk6lsaFBIYEPqgLCJbNGgkeeQAc7ol+vAQx4uhriS8lTRbLwCIOpbwXbqseQfGwnd/MI0m2eFFNrPt46Tx2Cw==
   dependencies:
-    "@maptalks/fusiongl" "0.10.1"
-    "@maptalks/gltf-loader" "0.103.0"
+    "@maptalks/fusiongl" "0.120.0"
+    "@maptalks/gltf-loader" "0.120.0"
     "@maptalks/martini" "^0.4.0"
     "@maptalks/regl" "^3.6.0"
     "@maptalks/tbn-packer" "^1.4.5"
@@ -921,15 +948,34 @@
     earcut "^3.0.1"
     frustum-intersects "^0.2.4"
     gl-matrix "^3.4.0"
-    maptalks "1.4.6"
+    maptalks "1.9.0"
     wgsl_reflect "^1.0.16"
 
-"@maptalks/gltf-loader@0.103.0":
-  version "0.103.0"
-  resolved "https://registry.npmjs.org/@maptalks/gltf-loader/-/gltf-loader-0.103.0.tgz"
-  integrity sha512-8asbBjs/mj8HTMb9Pp/cSW6vtGl3KMRsAzBqA8nUinj2eQMpmUZuMORh1FOIZTxMAx8u031z9ROL3KOoL6FELA==
+"@maptalks/gltf-loader@0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/gltf-loader/-/gltf-loader-0.120.0.tgz"
+  integrity sha512-Rg25M1HDNuI7ddVn5tIWKp9UhJx2db3jxsUkhMVniWc43MZbVjQPzc94OaFIyU9ez1H7i2Gemp8ypQVYXyoqew==
   dependencies:
     gl-matrix "^3.4.0"
+
+"@maptalks/gpu@^0.120.0", "@maptalks/gpu@0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/gpu/-/gpu-0.120.0.tgz"
+  integrity sha512-2Bh15z9I8Ja3P/8SVnEH7CMI4fl1SoaWj7qYO+/6Pl2fs9YI9PvsjMfjVt9vH40WwStcvgjJZmSxw0Afdsfyjg==
+  dependencies:
+    "@maptalks/fusiongl" "0.120.0"
+    "@maptalks/gltf-loader" "0.120.0"
+    "@maptalks/martini" "^0.4.0"
+    "@maptalks/regl" "^3.6.0"
+    "@maptalks/tbn-packer" "^1.4.5"
+    "@webgpu/types" "0.1.52"
+    color "^3.0.0"
+    colorin "^0.6.0"
+    earcut "^3.0.1"
+    frustum-intersects "^0.2.4"
+    gl-matrix "^3.4.0"
+    maptalks "1.9.0"
+    wgsl_reflect "^1.0.16"
 
 "@maptalks/martini@^0.4.0":
   version "0.4.0"
@@ -947,6 +993,40 @@
   integrity sha512-miZF0diQ0Zf5bs4FNrBXp3ifdii6MUuW7lKxp+TZdzcj4Gs53BLX/rKLH24e1UbJJzQXjcxK37x6du5fXBCWNg==
   dependencies:
     gl-matrix "^2.6.1"
+
+"@maptalks/vt-plugin@0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/vt-plugin/-/vt-plugin-0.120.0.tgz"
+  integrity sha512-yIJMVFLLqrbHQh753q/UwPprsltCGxPVqw6GblSPDMGelkSXUriPIyOvHzFtYUezUfUFMnxIQGE/MIKLURlgbQ==
+
+"@maptalks/vt@^0.120.0":
+  version "0.120.0"
+  resolved "https://registry.npmjs.org/@maptalks/vt/-/vt-0.120.0.tgz"
+  integrity sha512-2qDqV0RxY+WmobAUCM04a8uK4PEnaZLzJqz9XXsaHMBPZzxEIoGxri54AK8gwtMAFxhY9PfKlnyqKREbArVWsw==
+  dependencies:
+    "@mapbox/point-geometry" "^0.1.0"
+    "@mapbox/shelf-pack" "^3.1.0"
+    "@mapbox/vector-tile" "^1.3.1"
+    "@maptalks/feature-filter" "^1.3.0"
+    "@maptalks/function-type" "^1.4.1"
+    "@maptalks/geojson-bbox" "^1.0.4"
+    "@maptalks/geojson-vt" "^3.5.0"
+    "@maptalks/gl" "0.120.0"
+    "@maptalks/gpu" "0.120.0"
+    "@maptalks/tbn-packer" "^1.4.5"
+    "@maptalks/vt-plugin" "0.120.0"
+    animation-easings "^0.1.0"
+    color "^3.0.0"
+    earcut "^3.0.1"
+    fast-deep-equal "^2.0.1"
+    gl-matrix "^3.4.0"
+    pbf "^3.2.1"
+    point-in-polygon "^1.1.0"
+    quickselect "^1.0.0"
+    rbush "^3.0.1"
+    robust-predicates "^2.0.4"
+    tinyqueue "^2.0.3"
+    vt-pbf "^3.1.0"
 
 "@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1":
   version "5.1.1-v1"
@@ -1082,6 +1162,11 @@ ajv@^8.0.1:
     fast-uri "^3.0.1"
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
+
+animation-easings@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.npmjs.org/animation-easings/-/animation-easings-0.1.0.tgz"
+  integrity sha512-v+y9l1aOaW6ej81MJx2CwU3SRpOqzTBynZa6+/OdlS3WKN9Rv5rz90WxFmcCgtpOVTYdt+pLHJAQBhCIzRiCuw==
 
 ansi-colors@^4.1.1:
   version "4.1.3"
@@ -2154,6 +2239,11 @@ iconv-lite@0.4.24:
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
+ieee754@^1.1.12:
+  version "1.2.1"
+  resolved "https://registry.npmjs.org/ieee754/-/ieee754-1.2.1.tgz"
+  integrity sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==
+
 ignore@^4.0.6:
   version "4.0.6"
   resolved "https://registry.npmjs.org/ignore/-/ignore-4.0.6.tgz"
@@ -2451,10 +2541,10 @@ magic-string@^0.25.7:
   dependencies:
     sourcemap-codec "^1.4.8"
 
-maptalks@>=1.0.0, maptalks@1.4.6:
-  version "1.4.6"
-  resolved "https://registry.npmjs.org/maptalks/-/maptalks-1.4.6.tgz"
-  integrity sha512-cWxncJpvBER86JXm46fNc3Gu7V7Uey6d42y/JGIPffxxZo4ByFj79Godo5oBfRTkp9jDf74nOrGNVnWpjaSgZw==
+maptalks@^1.9.0, maptalks@1.9.0:
+  version "1.9.0"
+  resolved "https://registry.npmjs.org/maptalks/-/maptalks-1.9.0.tgz"
+  integrity sha512-KyemSCovDTAUopwBfITL/X2amCfcbd7zksj85AlZtuo5AVdXasfH6HVRWvUeCWZ2zYdiFeq73kEqUWJSz4/vww==
   dependencies:
     "@maptalks/feature-filter" "^1.3.0"
     "@maptalks/function-type" "^1.4.1"
@@ -2659,6 +2749,14 @@ path-parse@^1.0.7:
   resolved "https://registry.npmjs.org/path-parse/-/path-parse-1.0.7.tgz"
   integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
+pbf@^3.2.1:
+  version "3.3.0"
+  resolved "https://registry.npmjs.org/pbf/-/pbf-3.3.0.tgz"
+  integrity sha512-XDF38WCH3z5OV/OVa8GKUNtLAyneuzbCisx7QUCF8Q6Nutx0WnJrQe5O+kOtBlLfRNUws98Y58Lblp+NJG5T4Q==
+  dependencies:
+    ieee754 "^1.1.12"
+    resolve-protobuf-schema "^2.1.0"
+
 picocolors@^1.0.0, picocolors@^1.1.1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz"
@@ -2669,6 +2767,11 @@ picomatch@^2.0.4, picomatch@^2.2.1, picomatch@^2.2.2:
   resolved "https://registry.npmjs.org/picomatch/-/picomatch-2.3.1.tgz"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
 
+point-in-polygon@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/point-in-polygon/-/point-in-polygon-1.1.0.tgz"
+  integrity sha512-3ojrFwjnnw8Q9242TzgXuTD+eKiutbzyslcq1ydfu82Db2y+Ogbmyrkpv0Hgj31qwT3lbS9+QAAO/pIQM35XRw==
+
 prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
@@ -2678,6 +2781,11 @@ progress@^2.0.0:
   version "2.0.3"
   resolved "https://registry.npmjs.org/progress/-/progress-2.0.3.tgz"
   integrity sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==
+
+protocol-buffers-schema@^3.3.1:
+  version "3.6.0"
+  resolved "https://registry.npmjs.org/protocol-buffers-schema/-/protocol-buffers-schema-3.6.0.tgz"
+  integrity sha512-TdDRD+/QNdrCGCE7v8340QyuXd4kIWIgapsE2+n/SaGiSSbomYl4TjHlvIoCWRpE7wFt02EpB35VVA2ImcBVqw==
 
 punycode@^2.1.0:
   version "2.3.1"
@@ -2696,10 +2804,15 @@ qs@6.13.0:
   dependencies:
     side-channel "^1.0.6"
 
-quickselect@^1.0.1:
+quickselect@^1.0.0, quickselect@^1.0.1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/quickselect/-/quickselect-1.1.1.tgz"
   integrity sha512-qN0Gqdw4c4KGPsBOQafj6yj/PA6c/L63f6CaZ/DCF/xF4Esu3jVmKLUDYxghFx8Kb/O7y9tI7x2RjTSXwdK1iQ==
+
+quickselect@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.npmjs.org/quickselect/-/quickselect-2.0.0.tgz"
+  integrity sha512-RKJ22hX8mHe3Y6wH/N3wCM6BWtjaxIyyUIkpHOvfFnxdI4yD4tBXEBKSbriGujF6jnSVkJrffuo6vxACiSSxIw==
 
 ramda@^0.27.1:
   version "0.27.2"
@@ -2734,6 +2847,13 @@ rbush@^2.0.2:
   integrity sha512-XBOuALcTm+O/H8G90b6pzu6nX6v2zCKiFG4BJho8a+bY6AER6t8uQUZdi5bomQc0AprCWhEGa7ncAbbRap0bRA==
   dependencies:
     quickselect "^1.0.1"
+
+rbush@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.npmjs.org/rbush/-/rbush-3.0.1.tgz"
+  integrity sha512-XRaVO0YecOpEuIvbhbpTrZgoiI6xBlz6hnlr6EHhd+0x9ase6EmeN+hdwwUaJvLcsFFQ8iWVF1GAK1yB0BWi0w==
+  dependencies:
+    quickselect "^2.0.0"
 
 readdirp@~3.6.0:
   version "3.6.0"
@@ -2803,6 +2923,13 @@ resolve-from@^4.0.0:
   resolved "https://registry.npmjs.org/resolve-from/-/resolve-from-4.0.0.tgz"
   integrity sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==
 
+resolve-protobuf-schema@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/resolve-protobuf-schema/-/resolve-protobuf-schema-2.1.0.tgz"
+  integrity sha512-kI5ffTiZWmJaS/huM8wZfEMer1eRd7oJQhDuxeCLe3t7N7mX3z94CN0xPxBQxFYQTSNz9T0i+v6inKqSdK8xrQ==
+  dependencies:
+    protocol-buffers-schema "^3.3.1"
+
 resolve@^1.17.0, resolve@^1.19.0, resolve@^1.22.10:
   version "1.22.10"
   resolved "https://registry.npmjs.org/resolve/-/resolve-1.22.10.tgz"
@@ -2823,6 +2950,11 @@ rimraf@^3.0.2:
   integrity sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==
   dependencies:
     glob "^7.1.3"
+
+robust-predicates@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.npmjs.org/robust-predicates/-/robust-predicates-2.0.4.tgz"
+  integrity sha512-l4NwboJM74Ilm4VKfbAtFeGq7aEjWL+5kVFcmgFA2MrdnQWx9iE/tUGvxY5HyMI7o/WpSIUFLbC5fbeaHgSCYg==
 
 rollup-plugin-terser@^7.0.2:
   version "7.0.2"
@@ -3118,6 +3250,11 @@ text-table@^0.2.0:
   resolved "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz"
   integrity sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
 
+tinyqueue@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/tinyqueue/-/tinyqueue-2.0.3.tgz"
+  integrity sha512-ppJZNDuKGgxzkHihX8v9v9G5f+18gzaTfrukGrq6ueg0lmH4nqVnA2IPG0AEH3jKEk2GRJCUhDoqpoiw3PHLBA==
+
 tmp@^0.2.1:
   version "0.2.5"
   resolved "https://registry.npmjs.org/tmp/-/tmp-0.2.5.tgz"
@@ -3232,6 +3369,15 @@ void-elements@^2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/void-elements/-/void-elements-2.0.1.tgz"
   integrity sha1-wGavtYK7HLQSjWDqkjkulNXp2+w=
+
+vt-pbf@^3.1.0:
+  version "3.1.3"
+  resolved "https://registry.npmjs.org/vt-pbf/-/vt-pbf-3.1.3.tgz"
+  integrity sha512-2LzDFzt0mZKZ9IpVF2r69G9bXaP2Q2sArJCmcCgvfTdCCZzSyz4aCLoQyUilu37Ll56tCblIZrXFIjNUpGIlmA==
+  dependencies:
+    "@mapbox/point-geometry" "0.1.0"
+    "@mapbox/vector-tile" "^1.3.1"
+    pbf "^3.2.1"
 
 wgsl_reflect@^1.0.16:
   version "1.2.3"

@@ -65,6 +65,14 @@ if (pkg.peerDependencies && pkg.peerDependencies['maptalks']) {
 
 outro = `typeof console !== 'undefined' && console.log('${outro}');`;
 
+const external = ['maptalks', '@maptalks/gl', '@maptalks/gpu','@maptalks/vt'];
+const globals = {
+    'maptalks': 'maptalks',
+    '@maptalks/gl': 'maptalks',
+    '@maptalks/gpu': 'maptalks',
+    '@maptalks/vt': 'maptalks'
+};
+
 module.exports = [
     {
         input: 'index.js',
@@ -81,13 +89,9 @@ module.exports = [
                 ignoreGlobal: true
             })
         ].concat(plugins),
-        external: ['maptalks', '@maptalks/gl', '@maptalks/vt'],
+        external,
         output: {
-            globals: {
-                'maptalks': 'maptalks',
-                '@maptalks/gl': 'maptalks',
-                '@maptalks/vt': 'maptalks'
-            },
+            globals,
             banner,
             outro,
             extend: true,
@@ -115,13 +119,9 @@ module.exports = [
                 ignoreGlobal: true
             })
         ].concat(plugins),
-        external: ['maptalks', '@maptalks/gl', '@maptalks/vt'],
+        external,
         output: {
-            globals: {
-                'maptalks': 'maptalks',
-                '@maptalks/gl': 'maptalks',
-                '@maptalks/vt': 'maptalks'
-            },
+            globals,
             banner,
             outro,
             extend: true,
