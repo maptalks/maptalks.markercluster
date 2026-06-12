@@ -434,6 +434,9 @@ const ClusterLayerRenderable = function(Base) {
             if (ratio === 0 || !toClusters) {
                 return;
             }
+            if (!this._markerExtent) {
+                return;
+            }
             const z = parentClusters.zoom,
                 r = map._getResolution(z) * this.layer.options['maxClusterRadius'],
                 min = this._markerExtent.getMin();
